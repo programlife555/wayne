@@ -1,7 +1,7 @@
-import { AfterContentInit, ChangeDetectorRef, Component, OnDestroy, OnInit, ViewChild, ElementRef} from '@angular/core';
+import { AfterContentInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { State } from '@clr/angular';
-import { Observable } from 'rxjs/Observable';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { combineLatest } from 'rxjs';
 import { Subscription } from 'rxjs/Subscription';
 import { AuthService } from '../../shared/auth/auth.service';
 import { CacheService } from '../../shared/auth/cache.service';
@@ -22,20 +22,28 @@ import { KubeDaemonSet } from '../../shared/model/v1/kubernetes/daemonset';
 import { PublishStatus } from '../../shared/model/v1/publish-status';
 import { TemplateStatus } from '../../shared/model/v1/status';
 import { PageState } from '../../shared/page/page-state';
-import { ConfirmationButtons, ConfirmationState, ConfirmationTargets, httpStatusCode, PublishType, TemplateState } from '../../shared/shared.const';
+import {
+  ConfirmationButtons,
+  ConfirmationState,
+  ConfirmationTargets,
+  httpStatusCode,
+  PublishType,
+  TemplateState
+} from '../../shared/shared.const';
 import { PublishHistoryService } from '../common/publish-history/publish-history.service';
 import { CreateEditDaemonSetComponent } from './create-edit-daemonset/create-edit-daemonset.component';
 import { ListDaemonSetComponent } from './list-daemonset/list-daemonset.component';
-import {TabDragService} from '../../shared/client/v1/tab-drag.service';
-import {OrderItem} from '../../shared/model/v1/order';
+import { TabDragService } from '../../shared/client/v1/tab-drag.service';
+import { OrderItem } from '../../shared/model/v1/order';
+import { TranslateService } from '@ngx-translate/core';
 
 const showState = {
-  '创建时间': {hidden: false},
-  '版本': {hidden: false},
-  '上线机房': {hidden: false},
-  '发布说明': {hidden: false},
-  '创建者': {hidden: false},
-  '操作': {hidden: false}
+  'create_time': {hidden: false},
+  'version': {hidden: false},
+  'online_cluster': {hidden: false},
+  'release_explain': {hidden: false},
+  'create_user': {hidden: false},
+  'action': {hidden: false}
 };
 
 @Component({
@@ -51,7 +59,7 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
 
   pageState: PageState = new PageState();
   changedDaemonSetTpls: DaemonSetTemplate[];
-  isOnline: boolean = false;
+  isOnline = false;
   daemonSetId: number;
   app: App;
   appId: number;
@@ -77,18 +85,19 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
               private cdr: ChangeDetectorRef,
               private appService: AppService,
               private tabDragService: TabDragService,
-               private el: ElementRef,
+              private el: ElementRef,
               private deletionDialogService: ConfirmationDialogService,
               private clusterService: ClusterService,
+              public translate: TranslateService,
               private messageHandlerService: MessageHandlerService) {
-                this.tabScription = this.tabDragService.tabDragOverObservable.subscribe(over => {
-                  if (over) this.tabChange();
-                })
+    this.tabScription = this.tabDragService.tabDragOverObservable.subscribe(over => {
+      if (over) { this.tabChange(); }
+    });
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.DAEMONSET) {
-        let daemonSetId = message.data;
+        const daemonSetId = message.data;
         this.daemonSetService.deleteById(daemonSetId, this.appId)
           .subscribe(
             response => {
@@ -109,11 +118,15 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
     this.initShow();
   }
 
+  diffTpl() {
+    this.listDaemonSet.diffTpl();
+  }
+
   initShow() {
     this.showList = [];
     Object.keys(this.showState).forEach(key => {
-      if (!this.showState[key].hidden) this.showList.push(key);
-    })
+      if (!this.showState[key].hidden) { this.showList.push(key); }
+    });
   }
 
   confirmEvent() {
@@ -123,7 +136,7 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
       } else {
         this.showState[key] = {hidden: true};
       }
-    })
+    });
   }
 
   cancelEvent() {
@@ -139,11 +152,11 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
   tabChange() {
     const orderList = [].slice.call(this.el.nativeElement.querySelectorAll('.tabs-item')).map((item, index) => {
       return {
-        id: parseInt(item.id),
+        id: parseInt(item.id, 10),
         order: index
-      }
+      };
     });
-    if (this.orderCache && JSON.stringify(this.orderCache) === JSON.stringify(orderList)) return;
+    if (this.orderCache && JSON.stringify(this.orderCache) === JSON.stringify(orderList)) { return; }
     this.daemonSetService.updateOrder(this.appId, orderList).subscribe(
       response => {
         if (response.data === 'ok!') {
@@ -163,15 +176,15 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
         return {
           id: item.id,
           order: item.order
-        }
-      })
+        };
+      });
     } else {
       this.orderCache = [].slice.call(this.el.nativeElement.querySelectorAll('.tabs-item')).map((item, index) => {
         return {
-          id: parseInt(item.id),
+          id: parseInt(item.id, 10),
           order: index
-        }
-      })
+        };
+      });
     }
   }
 
@@ -182,27 +195,27 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
   syncStatus() {
     if (this.changedDaemonSetTpls && this.changedDaemonSetTpls.length > 0) {
       for (let i = 0; i < this.changedDaemonSetTpls.length; i++) {
-        let tpl = this.changedDaemonSetTpls[i];
+        const tpl = this.changedDaemonSetTpls[i];
         if (tpl.status && tpl.status.length > 0) {
           for (let j = 0; j < tpl.status.length; j++) {
-            let status = tpl.status[j];
-            if (status.errNum > 2) continue;
+            const status = tpl.status[j];
+            if (status.errNum > 2)  { continue; }
             this.daemonSetClient.get(this.appId, status.cluster, this.cacheService.kubeNamespace, tpl.name).subscribe(
               response => {
-                let code = response.statusCode | response.status;
+                const code = response.statusCode || response.status;
                 if (code === httpStatusCode.NoContent) {
                   this.changedDaemonSetTpls[i].status[j].state = TemplateState.NOT_FOUND;
-                  return
+                  return;
                 }
 
-                let podInfo = response.data.pods;
+                const podInfo = response.data.pods;
                 // 防止切换tab tpls数据发生变化导致报错
                 if (this.changedDaemonSetTpls &&
                   this.changedDaemonSetTpls[i] &&
                   this.changedDaemonSetTpls[i].status &&
                   this.changedDaemonSetTpls[i].status[j]) {
                   let state = TemplateState.FAILD;
-                  if (podInfo.current == podInfo.desired) {
+                  if (podInfo.current === podInfo.desired) {
                     state = TemplateState.SUCCESS;
                   }
                   this.changedDaemonSetTpls[i].status[j].state = state;
@@ -216,13 +229,13 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
                   this.changedDaemonSetTpls[i] &&
                   this.changedDaemonSetTpls[i].status &&
                   this.changedDaemonSetTpls[i].status[j]) {
-                    this.changedDaemonSetTpls[i].status[j].errNum += 1;
-                    this.messageHandlerService.showError(`${status.cluster}请求错误次数 ${this.changedDaemonSetTpls[i].status[j].errNum} 次`);
-                    if (this.changedDaemonSetTpls[i].status[j].errNum === 3) {
-                      this.messageHandlerService.showError(`${status.cluster}的错误请求已经停止，请联系管理员解决`);
-                    }
+                  this.changedDaemonSetTpls[i].status[j].errNum += 1;
+                  this.messageHandlerService.showError(`${status.cluster}请求错误次数 ${this.changedDaemonSetTpls[i].status[j].errNum} 次`);
+                  if (this.changedDaemonSetTpls[i].status[j].errNum === 3) {
+                    this.messageHandlerService.showError(`${status.cluster}的错误请求已经停止，请联系管理员解决`);
                   }
-                console.log(error)
+                }
+                console.log(error);
               }
             );
           }
@@ -250,10 +263,10 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
   }
 
   initDaemonSet(refreshTpl?: boolean) {
-    this.appId = parseInt(this.route.parent.snapshot.params['id']);
-    let namespaceId = this.cacheService.namespaceId;
-    this.daemonSetId = parseInt(this.route.snapshot.params['daemonSetId']);
-    Observable.combineLatest(
+    this.appId = parseInt(this.route.parent.snapshot.params['id'], 10);
+    const namespaceId = this.cacheService.namespaceId;
+    this.daemonSetId = parseInt(this.route.snapshot.params['daemonSetId'], 10);
+    combineLatest(
       this.clusterService.getNames(),
       this.daemonSetService.listPage(PageState.fromState({sort: {by: 'id', reverse: false}}, {pageSize: 1000}), this.appId, 'false'),
       this.appService.getById(this.appId, namespaceId)
@@ -263,7 +276,7 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
         this.daemonSets = response[1].data.list.sort((a, b) => a.order - b.order);
         this.initOrder(this.daemonSets);
         this.app = response[2].data;
-        let isRedirectUri = this.redirectUri();
+        const isRedirectUri = this.redirectUri();
         if (isRedirectUri) {
           this.navigateUri();
         }
@@ -288,32 +301,32 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
         this.daemonSetId = this.daemonSets[0].id;
         return true;
       }
-      for (let daemon of this.daemonSets) {
-        if (this.daemonSetId == daemon.id) {
+      for (const daemon of this.daemonSets) {
+        if (this.daemonSetId === daemon.id) {
           return false;
         }
       }
       this.daemonSetId = this.daemonSets[0].id;
       return true;
     } else {
-      return false
+      return false;
     }
   }
 
   // 点击创建守护进程集
   createDaemonSet(): void {
-    this.createEditDaemonSet.newOrEdit(this.app, this.filterCluster());
+    this.createEditDaemonSet.newOrEditResource(this.app, this.filterCluster());
   }
 
   // 点击编辑守护进程集
   editDaemonSet() {
-    this.createEditDaemonSet.newOrEdit(this.app, this.filterCluster(), this.daemonSetId);
+    this.createEditDaemonSet.newOrEditResource(this.app, this.filterCluster(), this.daemonSetId);
   }
 
   filterCluster(): Cluster[] {
     return this.clusters.filter((clusterObj: Cluster) => {
       return this.cacheService.namespace.metaDataObj.clusterMeta &&
-        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name]
+        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name];
     });
   }
 
@@ -339,15 +352,16 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
   // 点击克隆守护进程集模版
   cloneDaemonSetTpl(tpl: DaemonSetTemplate) {
     if (tpl) {
-      this.router.navigate([`portal/namespace/${this.cacheService.namespaceId}/app/${this.app.id}/daemonset/${this.daemonSetId}/tpl/${tpl.id}`]);
+      this.router.navigate(
+        [`portal/namespace/${this.cacheService.namespaceId}/app/${this.app.id}/daemonset/${this.daemonSetId}/tpl/${tpl.id}`]);
     }
   }
 
   deleteDaemonSet() {
     if (this.publishStatus && this.publishStatus.length > 0) {
-      this.messageHandlerService.warning('已上线守护进程集无法删除，请先下线守护进程集！')
+      this.messageHandlerService.warning('已上线守护进程集无法删除，请先下线守护进程集！');
     } else {
-      let deletionMessage = new ConfirmationMessage(
+      const deletionMessage = new ConfirmationMessage(
         '删除守护进程集确认',
         '是否确认删除守护进程集',
         this.daemonSetId,
@@ -358,9 +372,9 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (!this.daemonSetId) {
-      return
+      return;
     }
     if (state) {
       this.pageState = PageState.fromState(state, {
@@ -375,14 +389,14 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
     this.pageState.params['deleted'] = false;
     this.pageState.params['daemonSetId'] = this.daemonSetId;
     this.pageState.params['isOnline'] = this.isOnline;
-    Observable.combineLatest(
+    combineLatest(
       this.daemonSetTplService.listPage(this.pageState, this.appId),
       this.publishService.listStatus(PublishType.DAEMONSET, this.daemonSetId)
     ).subscribe(
       response => {
-        let status = response[1].data;
+        const status = response[1].data;
         this.publishStatus = status;
-        let tpls = response[0].data;
+        const tpls = response[0].data;
         this.pageState.page.totalPage = tpls.totalPage;
         this.pageState.page.totalCount = tpls.totalCount;
         this.changedDaemonSetTpls = this.buildTplList(tpls.list, status);
@@ -396,9 +410,9 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
     if (!daemonSetTpls) {
       return daemonSetTpls;
     }
-    let tplStatusMap = {};
+    const tplStatusMap = {};
     if (status && status.length > 0) {
-      for (let state of status) {
+      for (const state of status) {
         if (!tplStatusMap[state.templateId]) {
           tplStatusMap[state.templateId] = Array<TemplateStatus>();
         }
@@ -406,30 +420,35 @@ export class DaemonSetComponent implements AfterContentInit, OnDestroy, OnInit {
       }
     }
 
-    let results = Array<DaemonSetTemplate>();
-    for (let daemonSetTpl of daemonSetTpls) {
+    const results = Array<DaemonSetTemplate>();
+    for (const daemonSetTpl of daemonSetTpls) {
       let kubeDaemonSet = new KubeDaemonSet();
       kubeDaemonSet = JSON.parse(daemonSetTpl.template);
-      let containers = kubeDaemonSet.spec.template.spec.containers;
+      const containers = kubeDaemonSet.spec.template.spec.containers;
       if (containers.length > 0) {
-        let containerVersions = Array<string>();
-        for (let con of containers) {
+        const containerVersions = Array<string>();
+        for (const con of containers) {
           containerVersions.push(con.image);
         }
         daemonSetTpl.containerVersions = containerVersions;
 
-        let publishStatus = tplStatusMap[daemonSetTpl.id];
+        const publishStatus = tplStatusMap[daemonSetTpl.id];
         if (publishStatus && publishStatus.length > 0) {
           daemonSetTpl.status = publishStatus;
         }
       }
-      results.push(daemonSetTpl)
+      results.push(daemonSetTpl);
     }
     return results;
   }
 
   retrieveDaemonSets() {
-    this.daemonSetService.listPage(PageState.fromState({sort: {by: 'id', reverse: false}}, {pageSize: 1000}), this.appId, 'false').subscribe(
+    this.daemonSetService.listPage(PageState.fromState({
+      sort: {
+        by: 'id',
+        reverse: false
+      }
+    }, {pageSize: 1000}), this.appId, 'false').subscribe(
       response => {
         this.daemonSets = response.data.list.sort((a, b) => a.order - b.order);
         this.initOrder(this.daemonSets);

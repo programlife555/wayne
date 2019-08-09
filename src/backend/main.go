@@ -4,7 +4,7 @@ import (
 	"github.com/Qihoo360/wayne/src/backend/cmd"
 )
 
-var Version string = "1.0.0"
+const Version = "1.6.1"
 
 func main() {
 	cmd.Version = Version

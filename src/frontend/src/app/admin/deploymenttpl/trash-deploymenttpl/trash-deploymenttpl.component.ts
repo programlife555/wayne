@@ -1,15 +1,15 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {DeploymentTpl} from '../../../shared/model/v1/deploymenttpl';
-import {DeploymentTplService} from '../../../shared/client/v1/deploymenttpl.service';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
-import {PageState} from '../../../shared/page/page-state';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../../shared/shared.const';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { DeploymentTpl } from '../../../shared/model/v1/deploymenttpl';
+import { DeploymentTplService } from '../../../shared/client/v1/deploymenttpl.service';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { PageState } from '../../../shared/page/page-state';
 
 @Component({
   selector: 'trash-deploymenttpl',
@@ -19,8 +19,8 @@ export class TrashDeploymentTplComponent implements OnInit, OnDestroy {
 
   deploymentTpls: DeploymentTpl[];
   pageState: PageState = new PageState();
-  currentPage: number = 1;
-  state: State;
+  currentPage = 1;
+  state: ClrDatagridStateInterface;
 
   subscription: Subscription;
 
@@ -32,7 +32,7 @@ export class TrashDeploymentTplComponent implements OnInit, OnDestroy {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.TRASH_DEPLOYMENT_TPL) {
-        let id = message.data;
+        const id = message.data;
         this.deploymentTplService.deleteById(id, 0, false)
           .subscribe(
             response => {
@@ -63,17 +63,21 @@ export class TrashDeploymentTplComponent implements OnInit, OnDestroy {
     this.refresh(this.state);
   }
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     if (state) {
       this.state = state;
-      this.pageState = PageState.fromState(state, {pageSize: 10, totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
+      this.pageState = PageState.fromState(state, {
+        pageSize: 10,
+        totalPage: this.pageState.page.totalPage,
+        totalCount: this.pageState.page.totalCount
+      });
     }
     this.pageState.params['deleted'] = true;
     this.deploymentTplService
       .listPage(this.pageState, 0)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.deploymentTpls = data.list;
@@ -83,7 +87,7 @@ export class TrashDeploymentTplComponent implements OnInit, OnDestroy {
   }
 
   deleteDeploymentTpl(deploymentTpl: DeploymentTpl) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除部署模版确认',
       '你确认永久删除部署模版 ' + deploymentTpl.name + ' ？删除后将不可恢复！',
       deploymentTpl.id,

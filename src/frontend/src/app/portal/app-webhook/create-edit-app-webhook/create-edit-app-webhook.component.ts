@@ -1,21 +1,20 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {WebHook} from '../../../shared/model/v1/webhook';
-import {WebHookService} from '../../../shared/client/v1/webhook.service';
-import {HookEvent} from '../../../shared/model/v1/hook-event';
-import {CacheService} from '../../../shared/auth/cache.service';
-import {ClrDatagridStateInterface} from '@clr/angular';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { WebHook } from '../../../shared/model/v1/webhook';
+import { WebHookService } from '../../../shared/client/v1/webhook.service';
+import { HookEvent } from '../../../shared/model/v1/hook-event';
+import { CacheService } from '../../../shared/auth/cache.service';
 
 @Component({
   selector: 'create-edit-app-webhook',
   templateUrl: 'create-edit-app-webhook.component.html',
   styleUrls: ['create-edit-app-webhook.scss']
 })
-export class CreateEditAppWebHookComponent {
+export class CreateEditAppWebHookComponent implements OnInit {
   @Output() create = new EventEmitter<boolean>();
   @Output() update = new EventEmitter<boolean>();
 
@@ -45,7 +44,7 @@ export class CreateEditAppWebHookComponent {
 
     this.webHookService.getEvents().subscribe(
       response => {
-        this.hookEvents = response.data
+        this.hookEvents = response.data;
       },
       error => this.messageHandlerService.handleError(error)
     );
@@ -60,7 +59,7 @@ export class CreateEditAppWebHookComponent {
           this.webHook = next.data;
           this.watchEventKeys = this.webHook.events.split(',');
           this.modalOpened = true;
-        } ,
+        },
         error => {
           this.messageHandlerService.handleError(error);
         }
@@ -108,7 +107,7 @@ export class CreateEditAppWebHookComponent {
         () => {
           this.currentForm.reset();
         }
-      )
+      );
     } else {
       this.webHookService.update(this.webHook).subscribe(
         next => {
@@ -125,7 +124,7 @@ export class CreateEditAppWebHookComponent {
         () => {
           this.currentForm.reset();
         }
-      )
+      );
     }
   }
 
@@ -134,7 +133,7 @@ export class CreateEditAppWebHookComponent {
   }
 
   validateName(): boolean {
-    let ctl = this.currentForm.controls['webhook-name'];
+    const ctl = this.currentForm.controls['webhook-name'];
     if (ctl) {
       return ctl.valid;
     }
@@ -142,7 +141,7 @@ export class CreateEditAppWebHookComponent {
   }
 
   validateUrl(): boolean {
-    let ctl = this.currentForm.controls['webhook-url'];
+    const ctl = this.currentForm.controls['webhook-url'];
     if (ctl) {
       return ctl.valid;
     }

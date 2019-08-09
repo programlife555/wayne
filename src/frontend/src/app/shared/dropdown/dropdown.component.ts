@@ -1,21 +1,13 @@
-import {Component, HostListener, Inject, ElementRef, OnInit, Input} from '@angular/core';
-import {DOCUMENT} from '@angular/common';
-import {ScrollBarService} from '../client/v1/scrollBar.service';
-import {
-  trigger,
-  state,
-  style,
-  animate,
-  transition
-} from '@angular/animations';
-import {EventManager} from '@angular/platform-browser';
+import { Component, ElementRef, HostListener, Inject, Input, OnInit } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { ScrollBarService } from '../client/v1/scrollBar.service';
+import { animate, state, style, transition, trigger } from '@angular/animations';
+import { EventManager } from '@angular/platform-browser';
+
 @Component({
   selector: 'wayne-dropdown',
   templateUrl: './dropdown.component.html',
   styleUrls: ['./dropdown.component.scss'],
-  host: {
-    'class': 'wanye-dropdown'
-  },
   animations: [
     trigger('contentState', [
       state('show', style({height: '*'})),
@@ -32,31 +24,31 @@ import {EventManager} from '@angular/platform-browser';
   ]
 })
 
-export class DropDownComponent implements OnInit{
-  
-  showContent: boolean = false;
+export class DropDownComponent implements OnInit {
+
+  showContent = false;
   right: number | string = 0;
   width: number | string = 0;
-  maxHeight: number = 400;
-  marginRight: number = 0;
-  barState: string = 'hide';
+  maxHeight = 400;
+  marginRight = 0;
+  barState = 'hide';
   barStyle = {
     height: 0,
     top: 0
   };
-  clickStart :number = null;
+  clickStart: number = null;
   maxTrans: number;
   wrap: HTMLElement;
   barTopCache: number;
   eventList: any[] = new Array();
   // size 默认为空。如果传入small，则是最小自适应，传入middle，为50%宽度。
-  @Input('size') size: string = '';
+  @Input('size') size = '';
   // 这里是处理当item是最接近右边栏时候。采用right定位，防止出现滚动条。
   @Input('last') last;
- 
+
 
   get translateY() {
-    return `translateY(${this.barStyle.top}%)`
+    return `translateY(${this.barStyle.top}%)`;
   }
 
   constructor(
@@ -64,23 +56,30 @@ export class DropDownComponent implements OnInit{
     @Inject(DOCUMENT) private document: any,
     private scrollBar: ScrollBarService,
     private eventManager: EventManager
-    ) {}
+  ) {
+    el.nativeElement.setAttribute('class', 'wanye-dropdown');
+  }
 
   @HostListener('mouseenter')
   enterEvent() {
     const content = this.document.querySelector('.content-area');
-    this.right = this.size === 'small' || this.size === 'middle' ? 0 : - (this.document.body.clientWidth - this.getElementLeft(this.el.nativeElement) - this.el.nativeElement.offsetWidth - (content.scrollHeight > content.clientHeight ? 30 : 15));
-    this.width = this.size === 'small' ? 
-                               'auto' : 
-                                this.size === 'middle' ? 
-                                  this.document.body.offsetWidth / 2 :
-                                  this.document.body.offsetWidth - (content.scrollHeight > content.clientHeight ? this.scrollBar.scrollBarWidth + 30 : 30);
+    if (this.size === 'small' || this.size === 'middle') {
+      this.right = 0;
+    } else {
+      this.right = -(this.document.body.clientWidth - this.getElementLeft(this.el.nativeElement)
+        - this.el.nativeElement.offsetWidth - (content.scrollHeight > content.clientHeight ? 30 : 15));
+    }
+    this.width = this.size === 'small' ?
+      'auto' :
+      this.size === 'middle' ?
+        this.document.body.offsetWidth / 2 :
+        this.document.body.offsetWidth - (content.scrollHeight > content.clientHeight ? this.scrollBar.scrollBarWidth + 30 : 30);
     this.maxHeight = this.document.body.clientHeight - 80;
     this.marginRight = 0 - this.scrollBar.scrollBarWidth;
     this.showContent = true;
     setTimeout(() => {
       this.initBar();
-    }, 0)
+    }, 0);
   }
 
   @HostListener('mouseleave')
@@ -99,11 +98,13 @@ export class DropDownComponent implements OnInit{
       this.barState = 'hide';
     }
     this.barStyle.height = Math.pow(this.wrap.clientHeight, 2) / this.wrap.scrollHeight || 0;
-    this.maxTrans = Number(((this.wrap.clientHeight - this.barStyle.height) / this.barStyle.height * 100).toFixed(2)) ;
+    this.maxTrans = Number(((this.wrap.clientHeight - this.barStyle.height) / this.barStyle.height * 100).toFixed(2));
   }
 
   scrollEvent(evt) {
-    if (Object.prototype.toString.call(this.clickStart) !== '[object Null]') return;
+    if (Object.prototype.toString.call(this.clickStart) !== '[object Null]') {
+      return;
+    }
     evt.stopPropagation();
     const target = evt.target;
     this.barStyle.top = Number((target.scrollTop / target.clientHeight * 100).toFixed(2));
@@ -119,7 +120,7 @@ export class DropDownComponent implements OnInit{
 
   upEvent(evt) {
     this.eventList.forEach(item => {
-      item()
+      item();
     });
     this.eventList = [];
     this.document.onselectstart = null;
@@ -133,13 +134,13 @@ export class DropDownComponent implements OnInit{
     this.eventList.push(
       this.eventManager.addGlobalEventListener('document', 'mousemove', this.moveEvent.bind(this, target)),
       this.eventManager.addGlobalEventListener('document', 'mouseup', this.upEvent.bind(this))
-    )
+    );
     this.document.onselectstart = () => false;
   }
 
-  getElementLeft(el: any) :number {
+  getElementLeft(el: any): number {
     let left = 0;
-    while(el.tagName.toLowerCase() !== 'body') {
+    while (el.tagName.toLowerCase() !== 'body') {
       left += el.offsetLeft;
       el = el.offsetParent;
     }

@@ -8,9 +8,10 @@ import (
 	"strings"
 	"time"
 
+	goldap "gopkg.in/ldap.v2"
+
 	"github.com/Qihoo360/wayne/src/backend/models"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	goldap "gopkg.in/ldap.v2"
 )
 
 // ValidateLdapConf ...
@@ -66,7 +67,7 @@ func formatLdapURL(ldapURL string) (string, error) {
 		splitLdapURL := strings.Split(ldapURL, "://")
 		protocol, hostport = splitLdapURL[0], splitLdapURL[1]
 		if !((protocol == "ldap") || (protocol == "ldaps")) {
-			return "", fmt.Errorf("unknown ldap protocl")
+			return "", fmt.Errorf("unknown ldap protocol")
 		}
 	} else {
 		hostport = ldapURL

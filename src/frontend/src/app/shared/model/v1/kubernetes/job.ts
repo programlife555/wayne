@@ -2,947 +2,1015 @@
 
 
 export class JobCondition {
-    type: string;
-    status: string;
-    lastProbeTime: Time;
-    lastTransitionTime: Time;
-    reason: string;
-    message: string;
-    //[JobCondition:]
+  type: string;
+  status: string;
+  lastProbeTime: Time;
+  lastTransitionTime: Time;
+  reason: string;
+  message: string;
 
 
-    //[end]
+
+
 }
+
 export class JobStatus {
-    conditions: JobCondition[];
-    startTime: Time;
-    completionTime: Time;
-    active: number;
-    succeeded: number;
-    failed: number;
-    //[JobStatus:]
+  conditions: JobCondition[];
+  startTime: Time;
+  completionTime: Time;
+  active: number;
+  succeeded: number;
+  failed: number;
 
 
-    //[end]
+
+
 }
+
 export class HostAlias {
-    ip: string;
-    hostnames: string[];
-    //[HostAlias:]
+  ip: string;
+  hostnames: string[];
 
 
-    //[end]
+
+
 }
+
 export class Toleration {
-    key: string;
-    operator: string;
-    value: string;
-    effect: string;
-    tolerationSeconds: number;
-    //[Toleration:]
+  key: string;
+  operator: string;
+  value: string;
+  effect: string;
+  tolerationSeconds: number;
 
 
-    //[end]
+
+
 }
 
 
 export class PodAntiAffinity {
-    requiredDuringSchedulingIgnoredDuringExecution: PodAffinityTerm[];
-    preferredDuringSchedulingIgnoredDuringExecution: WeightedPodAffinityTerm[];
-    //[PodAntiAffinity:]
+  requiredDuringSchedulingIgnoredDuringExecution: PodAffinityTerm[];
+  preferredDuringSchedulingIgnoredDuringExecution: WeightedPodAffinityTerm[];
 
 
-    //[end]
+
+
 }
 
 export class WeightedPodAffinityTerm {
-    weight: number;
-    podAffinityTerm: PodAffinityTerm;
-    //[WeightedPodAffinityTerm:]
+  weight: number;
+  podAffinityTerm: PodAffinityTerm;
 
 
-    //[end]
+
+
 }
 
 export class PodAffinityTerm {
-    labelSelector: LabelSelector;
-    namespaces: string[];
-    topologyKey: string;
-    //[PodAffinityTerm:]
+  labelSelector: LabelSelector;
+  namespaces: string[];
+  topologyKey: string;
 
 
-    //[end]
+
+
 }
+
 export class PodAffinity {
-    requiredDuringSchedulingIgnoredDuringExecution: PodAffinityTerm[];
-    preferredDuringSchedulingIgnoredDuringExecution: WeightedPodAffinityTerm[];
-    //[PodAffinity:]
+  requiredDuringSchedulingIgnoredDuringExecution: PodAffinityTerm[];
+  preferredDuringSchedulingIgnoredDuringExecution: WeightedPodAffinityTerm[];
 
 
-    //[end]
+
+
 }
 
 export class PreferredSchedulingTerm {
-    weight: number;
-    preference: NodeSelectorTerm;
-    //[PreferredSchedulingTerm:]
+  weight: number;
+  preference: NodeSelectorTerm;
 
 
-    //[end]
+
+
 }
+
 export class NodeSelectorRequirement {
-    key: string;
-    operator: string;
-    values: string[];
-    //[NodeSelectorRequirement:]
+  key: string;
+  operator: string;
+  values: string[];
 
 
-    //[end]
+
+
 }
+
 export class NodeSelectorTerm {
-    matchExpressions: NodeSelectorRequirement[];
-    //[NodeSelectorTerm:]
+  matchExpressions: NodeSelectorRequirement[];
 
 
-    //[end]
+
+
 }
+
 export class NodeSelector {
-    nodeSelectorTerms: NodeSelectorTerm[];
-    //[NodeSelector:]
+  nodeSelectorTerms: NodeSelectorTerm[];
 
 
-    //[end]
+
+
 }
+
 export class NodeAffinity {
-    requiredDuringSchedulingIgnoredDuringExecution: NodeSelector;
-    preferredDuringSchedulingIgnoredDuringExecution: PreferredSchedulingTerm[];
-    //[NodeAffinity:]
+  requiredDuringSchedulingIgnoredDuringExecution: NodeSelector;
+  preferredDuringSchedulingIgnoredDuringExecution: PreferredSchedulingTerm[];
 
 
-    //[end]
+
+
 }
+
 export class Affinity {
-    nodeAffinity: NodeAffinity;
-    podAffinity: PodAffinity;
-    podAntiAffinity: PodAntiAffinity;
-    //[Affinity:]
+  nodeAffinity: NodeAffinity;
+  podAffinity: PodAffinity;
+  podAntiAffinity: PodAntiAffinity;
 
 
-    //[end]
+
+
 }
 
 
 export class PodSecurityContext {
-    seLinuxOptions: SELinuxOptions;
-    runAsUser: number;
-    runAsNonRoot: boolean;
-    supplementalGroups: number[];
-    fsGroup: number;
-    //[PodSecurityContext:]
+  seLinuxOptions: SELinuxOptions;
+  runAsUser: number;
+  runAsNonRoot: boolean;
+  supplementalGroups: number[];
+  fsGroup: number;
 
 
-    //[end]
+
+
 }
 
 export class SELinuxOptions {
-    user: string;
-    role: string;
-    type: string;
-    level: string;
-    //[SELinuxOptions:]
+  user: string;
+  role: string;
+  type: string;
+  level: string;
 
 
-    //[end]
+
+
 }
+
 export class Capabilities {
-    add: string[];
-    drop: string[];
-    //[Capabilities:]
+  add: string[];
+  drop: string[];
 
 
-    //[end]
+
+
 }
+
 export class SecurityContext {
-    capabilities: Capabilities;
-    privileged: boolean;
-    seLinuxOptions: SELinuxOptions;
-    runAsUser: number;
-    runAsNonRoot: boolean;
-    readOnlyRootFilesystem: boolean;
-    //[SecurityContext:]
+  capabilities: Capabilities;
+  privileged: boolean;
+  seLinuxOptions: SELinuxOptions;
+  runAsUser: number;
+  runAsNonRoot: boolean;
+  readOnlyRootFilesystem: boolean;
 
 
-    //[end]
+
+
 }
 
 
 
 
 export class Handler {
-    exec: ExecAction;
-    httpGet: HTTPGetAction;
-    tcpSocket: TCPSocketAction;
-    //[Handler:]
+  exec: ExecAction;
+  httpGet: HTTPGetAction;
+  tcpSocket: TCPSocketAction;
 
 
-    //[end]
+
+
 }
+
 export class Lifecycle {
-    postStart: Handler;
-    preStop: Handler;
-    //[Lifecycle:]
+  postStart: Handler;
+  preStop: Handler;
 
 
-    //[end]
+
+
 }
 
 
 export class TCPSocketAction {
-    port: IntOrString;
-    host: string;
-    //[TCPSocketAction:]
+  port: IntOrString;
+  host: string;
 
 
-    //[end]
+
+
 }
+
 export class HTTPHeader {
-    name: string;
-    value: string;
-    //[HTTPHeader:]
+  name: string;
+  value: string;
 
 
-    //[end]
+
+
 }
+
 export class IntOrString {
-    //[IntOrString:]
 
 
-    //[end]
+
+
 }
+
 export class HTTPGetAction {
-    path: string;
-    port: IntOrString;
-    host: string;
-    scheme: string;
-    httpHeaders: HTTPHeader[];
-    //[HTTPGetAction:]
+  path: string;
+  port: IntOrString;
+  host: string;
+  scheme: string;
+  httpHeaders: HTTPHeader[];
 
 
-    //[end]
+
+
 }
+
 export class ExecAction {
-    command: string[];
-    //[ExecAction:]
+  command: string[];
 
 
-    //[end]
+
+
 }
+
 export class Probe {
-    exec: ExecAction;
-    httpGet: HTTPGetAction;
-    tcpSocket: TCPSocketAction;
-    initialDelaySeconds: number;
-    timeoutSeconds: number;
-    periodSeconds: number;
-    successThreshold: number;
-    failureThreshold: number;
-    //[Probe:]
+  exec: ExecAction;
+  httpGet: HTTPGetAction;
+  tcpSocket: TCPSocketAction;
+  initialDelaySeconds: number;
+  timeoutSeconds: number;
+  periodSeconds: number;
+  successThreshold: number;
+  failureThreshold: number;
 
 
-    //[end]
+
+
 }
+
 export class VolumeMount {
-    name: string;
-    readOnly: boolean;
-    mountPath: string;
-    subPath: string;
-    //[VolumeMount:]
+  name: string;
+  readOnly: boolean;
+  mountPath: string;
+  subPath: string;
 
 
-    //[end]
+
+
 }
+
 export class ResourceRequirements {
-    limits: {};
-    requests: {};
-    //[ResourceRequirements:]
+  limits: {};
+  requests: {};
 
 
-    //[end]
+
+
 }
+
 export class SecretKeySelector {
-    name: string;
-    key: string;
-    optional: boolean;
-    //[SecretKeySelector:]
+  name: string;
+  key: string;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class ConfigMapKeySelector {
-    name: string;
-    key: string;
-    optional: boolean;
-    //[ConfigMapKeySelector:]
+  name: string;
+  key: string;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
 
 
 export class EnvVarSource {
-    fieldRef: ObjectFieldSelector;
-    resourceFieldRef: ResourceFieldSelector;
-    configMapKeyRef: ConfigMapKeySelector;
-    secretKeyRef: SecretKeySelector;
-    //[EnvVarSource:]
+  fieldRef: ObjectFieldSelector;
+  resourceFieldRef: ResourceFieldSelector;
+  configMapKeyRef: ConfigMapKeySelector;
+  secretKeyRef: SecretKeySelector;
 
 
-    //[end]
+
+
 }
+
 export class EnvVar {
-    name: string;
-    value: string;
-    valueFrom: EnvVarSource;
-    //[EnvVar:]
+  name: string;
+  value: string;
+  valueFrom: EnvVarSource;
 
 
-    //[end]
+
+
 }
+
 export class SecretEnvSource {
-    name: string;
-    optional: boolean;
-    //[SecretEnvSource:]
+  name: string;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class ConfigMapEnvSource {
-    name: string;
-    optional: boolean;
-    //[ConfigMapEnvSource:]
+  name: string;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class EnvFromSource {
-    prefix: string;
-    configMapRef: ConfigMapEnvSource;
-    secretRef: SecretEnvSource;
-    //[EnvFromSource:]
+  prefix: string;
+  configMapRef: ConfigMapEnvSource;
+  secretRef: SecretEnvSource;
 
 
-    //[end]
+
+
 }
+
 export class ContainerPort {
-    name: string;
-    hostPort: number;
-    containerPort: number;
-    protocol: string;
-    hostIP: string;
-    //[ContainerPort:]
+  name: string;
+  hostPort: number;
+  containerPort: number;
+  protocol: string;
+  hostIP: string;
 
 
-    //[end]
+
+
 }
+
 export class Container {
-    name: string;
-    image: string;
-    command: string[];
-    args: string[];
-    workingDir: string;
-    ports: ContainerPort[];
-    envFrom: EnvFromSource[];
-    env: EnvVar[];
-    resources: ResourceRequirements;
-    volumeMounts: VolumeMount[];
-    livenessProbe: Probe;
-    readinessProbe: Probe;
-    lifecycle: Lifecycle;
-    terminationMessagePath: string;
-    terminationMessagePolicy: string;
-    imagePullPolicy: string;
-    securityContext: SecurityContext;
-    stdin: boolean;
-    stdinOnce: boolean;
-    tty: boolean;
-    //[Container:]
+  name: string;
+  image: string;
+  command: string[];
+  args: string[];
+  workingDir: string;
+  ports: ContainerPort[];
+  envFrom: EnvFromSource[];
+  env: EnvVar[];
+  resources: ResourceRequirements;
+  volumeMounts: VolumeMount[];
+  livenessProbe: Probe;
+  readinessProbe: Probe;
+  lifecycle: Lifecycle;
+  terminationMessagePath: string;
+  terminationMessagePolicy: string;
+  imagePullPolicy: string;
+  securityContext: SecurityContext;
+  stdin: boolean;
+  stdinOnce: boolean;
+  tty: boolean;
 
 
-    //[end]
+
+
 }
 
 export class StorageOSVolumeSource {
-    volumeName: string;
-    volumeNamespace: string;
-    fsType: string;
-    readOnly: boolean;
-    secretRef: LocalObjectReference;
-    //[StorageOSVolumeSource:]
+  volumeName: string;
+  volumeNamespace: string;
+  fsType: string;
+  readOnly: boolean;
+  secretRef: LocalObjectReference;
 
 
-    //[end]
+
+
 }
 
 export class ScaleIOVolumeSource {
-    gateway: string;
-    system: string;
-    secretRef: LocalObjectReference;
-    sslEnabled: boolean;
-    protectionDomain: string;
-    storagePool: string;
-    storageMode: string;
-    volumeName: string;
-    fsType: string;
-    readOnly: boolean;
-    //[ScaleIOVolumeSource:]
+  gateway: string;
+  system: string;
+  secretRef: LocalObjectReference;
+  sslEnabled: boolean;
+  protectionDomain: string;
+  storagePool: string;
+  storageMode: string;
+  volumeName: string;
+  fsType: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class PortworxVolumeSource {
-    volumeID: string;
-    fsType: string;
-    readOnly: boolean;
-    //[PortworxVolumeSource:]
+  volumeID: string;
+  fsType: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
 
 export class ConfigMapProjection {
-    name: string;
-    items: KeyToPath[];
-    optional: boolean;
-    //[ConfigMapProjection:]
+  name: string;
+  items: KeyToPath[];
+  optional: boolean;
 
 
-    //[end]
+
+
 }
 
 export class DownwardAPIProjection {
-    items: DownwardAPIVolumeFile[];
-    //[DownwardAPIProjection:]
+  items: DownwardAPIVolumeFile[];
 
 
-    //[end]
+
+
 }
 
 export class SecretProjection {
-    name: string;
-    items: KeyToPath[];
-    optional: boolean;
-    //[SecretProjection:]
+  name: string;
+  items: KeyToPath[];
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class VolumeProjection {
-    secret: SecretProjection;
-    downwardAPI: DownwardAPIProjection;
-    configMap: ConfigMapProjection;
-    //[VolumeProjection:]
+  secret: SecretProjection;
+  downwardAPI: DownwardAPIProjection;
+  configMap: ConfigMapProjection;
 
 
-    //[end]
+
+
 }
+
 export class ProjectedVolumeSource {
-    sources: VolumeProjection[];
-    defaultMode: number;
-    //[ProjectedVolumeSource:]
+  sources: VolumeProjection[];
+  defaultMode: number;
 
 
-    //[end]
+
+
 }
+
 export class PhotonPersistentDiskVolumeSource {
-    pdID: string;
-    fsType: string;
-    //[PhotonPersistentDiskVolumeSource:]
+  pdID: string;
+  fsType: string;
 
 
-    //[end]
+
+
 }
+
 export class AzureDiskVolumeSource {
-    diskName: string;
-    diskURI: string;
-    cachingMode: string;
-    fsType: string;
-    readOnly: boolean;
-    kind: string;
-    //[AzureDiskVolumeSource:]
+  diskName: string;
+  diskURI: string;
+  cachingMode: string;
+  fsType: string;
+  readOnly: boolean;
+  kind: string;
 
 
-    //[end]
+
+
 }
+
 export class QuobyteVolumeSource {
-    registry: string;
-    volume: string;
-    readOnly: boolean;
-    user: string;
-    group: string;
-    //[QuobyteVolumeSource:]
+  registry: string;
+  volume: string;
+  readOnly: boolean;
+  user: string;
+  group: string;
 
 
-    //[end]
+
+
 }
+
 export class VsphereVirtualDiskVolumeSource {
-    volumePath: string;
-    fsType: string;
-    storagePolicyName: string;
-    storagePolicyID: string;
-    //[VsphereVirtualDiskVolumeSource:]
+  volumePath: string;
+  fsType: string;
+  storagePolicyName: string;
+  storagePolicyID: string;
 
 
-    //[end]
+
+
 }
 
 export class ConfigMapVolumeSource {
-    name: string;
-    items: KeyToPath[];
-    defaultMode: number;
-    optional: boolean;
-    //[ConfigMapVolumeSource:]
+  name: string;
+  items: KeyToPath[];
+  defaultMode: number;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class AzureFileVolumeSource {
-    secretName: string;
-    shareName: string;
-    readOnly: boolean;
-    //[AzureFileVolumeSource:]
+  secretName: string;
+  shareName: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class FCVolumeSource {
-    targetWWNs: string[];
-    lun: number;
-    fsType: string;
-    readOnly: boolean;
-    //[FCVolumeSource:]
+  targetWWNs: string[];
+  lun: number;
+  fsType: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
 
 export class ResourceFieldSelector {
-    containerName: string;
-    resource: string;
-    divisor: Quantity;
-    //[ResourceFieldSelector:]
+  containerName: string;
+  resource: string;
+  divisor: Quantity;
 
 
-    //[end]
+
+
 }
+
 export class ObjectFieldSelector {
-    apiVersion: string;
-    fieldPath: string;
-    //[ObjectFieldSelector:]
+  apiVersion: string;
+  fieldPath: string;
 
 
-    //[end]
+
+
 }
+
 export class DownwardAPIVolumeFile {
-    path: string;
-    fieldRef: ObjectFieldSelector;
-    resourceFieldRef: ResourceFieldSelector;
-    mode: number;
-    //[DownwardAPIVolumeFile:]
+  path: string;
+  fieldRef: ObjectFieldSelector;
+  resourceFieldRef: ResourceFieldSelector;
+  mode: number;
 
 
-    //[end]
+
+
 }
+
 export class DownwardAPIVolumeSource {
-    items: DownwardAPIVolumeFile[];
-    defaultMode: number;
-    //[DownwardAPIVolumeSource:]
+  items: DownwardAPIVolumeFile[];
+  defaultMode: number;
 
 
-    //[end]
+
+
 }
+
 export class FlockerVolumeSource {
-    datasetName: string;
-    datasetUUID: string;
-    //[FlockerVolumeSource:]
+  datasetName: string;
+  datasetUUID: string;
 
 
-    //[end]
+
+
 }
 
 export class CephFSVolumeSource {
-    monitors: string[];
-    path: string;
-    user: string;
-    secretFile: string;
-    secretRef: LocalObjectReference;
-    readOnly: boolean;
-    //[CephFSVolumeSource:]
+  monitors: string[];
+  path: string;
+  user: string;
+  secretFile: string;
+  secretRef: LocalObjectReference;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class CinderVolumeSource {
-    volumeID: string;
-    fsType: string;
-    readOnly: boolean;
-    //[CinderVolumeSource:]
+  volumeID: string;
+  fsType: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
 
 export class FlexVolumeSource {
-    driver: string;
-    fsType: string;
-    secretRef: LocalObjectReference;
-    readOnly: boolean;
-    options: {};
-    //[FlexVolumeSource:]
+  driver: string;
+  fsType: string;
+  secretRef: LocalObjectReference;
+  readOnly: boolean;
+  options: {};
 
 
-    //[end]
+
+
 }
 
 export class RBDVolumeSource {
-    monitors: string[];
-    image: string;
-    fsType: string;
-    pool: string;
-    user: string;
-    keyring: string;
-    secretRef: LocalObjectReference;
-    readOnly: boolean;
-    //[RBDVolumeSource:]
+  monitors: string[];
+  image: string;
+  fsType: string;
+  pool: string;
+  user: string;
+  keyring: string;
+  secretRef: LocalObjectReference;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class PersistentVolumeClaimVolumeSource {
-    claimName: string;
-    readOnly: boolean;
-    //[PersistentVolumeClaimVolumeSource:]
+  claimName: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class GlusterfsVolumeSource {
-    endpoints: string;
-    path: string;
-    readOnly: boolean;
-    //[GlusterfsVolumeSource:]
+  endpoints: string;
+  path: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class LocalObjectReference {
-    name: string;
-    //[LocalObjectReference:]
+  name: string;
 
 
-    //[end]
+
+
 }
+
 export class ISCSIVolumeSource {
-    targetPortal: string;
-    iqn: string;
-    lun: number;
-    iscsiInterface: string;
-    fsType: string;
-    readOnly: boolean;
-    portals: string[];
-    chapAuthDiscovery: boolean;
-    chapAuthSession: boolean;
-    secretRef: LocalObjectReference;
-    //[ISCSIVolumeSource:]
+  targetPortal: string;
+  iqn: string;
+  lun: number;
+  iscsiInterface: string;
+  fsType: string;
+  readOnly: boolean;
+  portals: string[];
+  chapAuthDiscovery: boolean;
+  chapAuthSession: boolean;
+  secretRef: LocalObjectReference;
 
 
-    //[end]
+
+
 }
+
 export class NFSVolumeSource {
-    server: string;
-    path: string;
-    readOnly: boolean;
-    //[NFSVolumeSource:]
+  server: string;
+  path: string;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class KeyToPath {
-    key: string;
-    path: string;
-    mode: number;
-    //[KeyToPath:]
+  key: string;
+  path: string;
+  mode: number;
 
 
-    //[end]
+
+
 }
+
 export class SecretVolumeSource {
-    secretName: string;
-    items: KeyToPath[];
-    defaultMode: number;
-    optional: boolean;
-    //[SecretVolumeSource:]
+  secretName: string;
+  items: KeyToPath[];
+  defaultMode: number;
+  optional: boolean;
 
 
-    //[end]
+
+
 }
+
 export class GitRepoVolumeSource {
-    repository: string;
-    revision: string;
-    directory: string;
-    //[GitRepoVolumeSource:]
+  repository: string;
+  revision: string;
+  directory: string;
 
 
-    //[end]
+
+
 }
+
 export class AWSElasticBlockStoreVolumeSource {
-    volumeID: string;
-    fsType: string;
-    partition: number;
-    readOnly: boolean;
-    //[AWSElasticBlockStoreVolumeSource:]
+  volumeID: string;
+  fsType: string;
+  partition: number;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class GCEPersistentDiskVolumeSource {
-    pdName: string;
-    fsType: string;
-    partition: number;
-    readOnly: boolean;
-    //[GCEPersistentDiskVolumeSource:]
+  pdName: string;
+  fsType: string;
+  partition: number;
+  readOnly: boolean;
 
 
-    //[end]
+
+
 }
+
 export class Quantity {
-    //[Quantity:]
 
 
-    //[end]
+
+
 }
+
 export class EmptyDirVolumeSource {
-    medium: string;
-    sizeLimit: Quantity;
-    //[EmptyDirVolumeSource:]
+  medium: string;
+  sizeLimit: Quantity;
 
 
-    //[end]
+
+
 }
+
 export class HostPathVolumeSource {
-    path: string;
-    //[HostPathVolumeSource:]
+  path: string;
 
 
-    //[end]
+
+
 }
+
 export class Volume {
-    name: string;
-    hostPath: HostPathVolumeSource;
-    emptyDir: EmptyDirVolumeSource;
-    gcePersistentDisk: GCEPersistentDiskVolumeSource;
-    awsElasticBlockStore: AWSElasticBlockStoreVolumeSource;
-    gitRepo: GitRepoVolumeSource;
-    secret: SecretVolumeSource;
-    nfs: NFSVolumeSource;
-    iscsi: ISCSIVolumeSource;
-    glusterfs: GlusterfsVolumeSource;
-    persistentVolumeClaim: PersistentVolumeClaimVolumeSource;
-    rbd: RBDVolumeSource;
-    flexVolume: FlexVolumeSource;
-    cinder: CinderVolumeSource;
-    cephfs: CephFSVolumeSource;
-    flocker: FlockerVolumeSource;
-    downwardAPI: DownwardAPIVolumeSource;
-    fc: FCVolumeSource;
-    azureFile: AzureFileVolumeSource;
-    configMap: ConfigMapVolumeSource;
-    vsphereVolume: VsphereVirtualDiskVolumeSource;
-    quobyte: QuobyteVolumeSource;
-    azureDisk: AzureDiskVolumeSource;
-    photonPersistentDisk: PhotonPersistentDiskVolumeSource;
-    projected: ProjectedVolumeSource;
-    portworxVolume: PortworxVolumeSource;
-    scaleIO: ScaleIOVolumeSource;
-    storageos: StorageOSVolumeSource;
-    //[Volume:]
+  name: string;
+  hostPath: HostPathVolumeSource;
+  emptyDir: EmptyDirVolumeSource;
+  gcePersistentDisk: GCEPersistentDiskVolumeSource;
+  awsElasticBlockStore: AWSElasticBlockStoreVolumeSource;
+  gitRepo: GitRepoVolumeSource;
+  secret: SecretVolumeSource;
+  nfs: NFSVolumeSource;
+  iscsi: ISCSIVolumeSource;
+  glusterfs: GlusterfsVolumeSource;
+  persistentVolumeClaim: PersistentVolumeClaimVolumeSource;
+  rbd: RBDVolumeSource;
+  flexVolume: FlexVolumeSource;
+  cinder: CinderVolumeSource;
+  cephfs: CephFSVolumeSource;
+  flocker: FlockerVolumeSource;
+  downwardAPI: DownwardAPIVolumeSource;
+  fc: FCVolumeSource;
+  azureFile: AzureFileVolumeSource;
+  configMap: ConfigMapVolumeSource;
+  vsphereVolume: VsphereVirtualDiskVolumeSource;
+  quobyte: QuobyteVolumeSource;
+  azureDisk: AzureDiskVolumeSource;
+  photonPersistentDisk: PhotonPersistentDiskVolumeSource;
+  projected: ProjectedVolumeSource;
+  portworxVolume: PortworxVolumeSource;
+  scaleIO: ScaleIOVolumeSource;
+  storageos: StorageOSVolumeSource;
 
 
-    //[end]
+
+
 }
+
 export class PodSpec {
-    volumes: Volume[];
-    initContainers: Container[];
-    containers: Container[];
-    restartPolicy: string;
-    terminationGracePeriodSeconds: number;
-    activeDeadlineSeconds: number;
-    dnsPolicy: string;
-    nodeSelector: {};
-    serviceAccountName: string;
-    serviceAccount: string;
-    automountServiceAccountToken: boolean;
-    nodeName: string;
-    hostNetwork: boolean;
-    hostPID: boolean;
-    hostIPC: boolean;
-    securityContext: PodSecurityContext;
-    imagePullSecrets: LocalObjectReference[];
-    hostname: string;
-    subdomain: string;
-    affinity: Affinity;
-    schedulerName: string;
-    tolerations: Toleration[];
-    hostAliases: HostAlias[];
-    //[PodSpec:]
+  volumes: Volume[];
+  initContainers: Container[];
+  containers: Container[];
+  restartPolicy: string;
+  terminationGracePeriodSeconds: number;
+  activeDeadlineSeconds: number;
+  dnsPolicy: string;
+  nodeSelector: {};
+  serviceAccountName: string;
+  serviceAccount: string;
+  automountServiceAccountToken: boolean;
+  nodeName: string;
+  hostNetwork: boolean;
+  hostPID: boolean;
+  hostIPC: boolean;
+  securityContext: PodSecurityContext;
+  imagePullSecrets: LocalObjectReference[];
+  hostname: string;
+  subdomain: string;
+  affinity: Affinity;
+  schedulerName: string;
+  tolerations: Toleration[];
+  hostAliases: HostAlias[];
 
 
-    //[end]
+
+
 }
 
 export class PodTemplateSpec {
-    metadata: ObjectMeta;
-    spec: PodSpec;
-    //[PodTemplateSpec:]
+  metadata: ObjectMeta;
+  spec: PodSpec;
 
 
-    //[end]
+
+
 }
+
 export class LabelSelectorRequirement {
-    key: string;
-    operator: string;
-    values: string[];
-    //[LabelSelectorRequirement:]
+  key: string;
+  operator: string;
+  values: string[];
 
 
-    //[end]
+
+
 }
+
 export class LabelSelector {
-    matchLabels: {};
-    matchExpressions: LabelSelectorRequirement[];
-    //[LabelSelector:]
+  matchLabels: {};
+  matchExpressions: LabelSelectorRequirement[];
 
 
-    //[end]
+
+
 }
+
 export class JobSpec {
-    parallelism: number;
-    completions: number;
-    activeDeadlineSeconds: number;
-    selector: LabelSelector;
-    manualSelector: boolean;
-    template: PodTemplateSpec;
-    //[JobSpec:]
+  parallelism: number;
+  completions: number;
+  activeDeadlineSeconds: number;
+  selector: LabelSelector;
+  manualSelector: boolean;
+  template: PodTemplateSpec;
 
 
-    //[end]
+
+
 }
+
 export class StatusCause {
-    reason: string;
-    message: string;
-    field: string;
-    //[StatusCause:]
+  reason: string;
+  message: string;
+  field: string;
 
 
-    //[end]
+
+
 }
+
 export class StatusDetails {
-    name: string;
-    group: string;
-    kind: string;
-    uid: string;
-    causes: StatusCause[];
-    retryAfterSeconds: number;
-    //[StatusDetails:]
+  name: string;
+  group: string;
+  kind: string;
+  uid: string;
+  causes: StatusCause[];
+  retryAfterSeconds: number;
 
 
-    //[end]
+
+
 }
+
 export class ListMeta {
-    selfLink: string;
-    resourceVersion: string;
-    //[ListMeta:]
+  selfLink: string;
+  resourceVersion: string;
 
 
-    //[end]
+
+
 }
+
 export class Status {
-    kind: string;
-    apiVersion: string;
-    metadata: ListMeta;
-    status: string;
-    message: string;
-    reason: string;
-    details: StatusDetails;
-    code: number;
-    //[Status:]
+  kind: string;
+  apiVersion: string;
+  metadata: ListMeta;
+  status: string;
+  message: string;
+  reason: string;
+  details: StatusDetails;
+  code: number;
 
 
-    //[end]
+
+
 }
+
 export class Initializer {
-    name: string;
-    //[Initializer:]
+  name: string;
 
 
-    //[end]
+
+
 }
+
 export class Initializers {
-    pending: Initializer[];
-    result: Status;
-    //[Initializers:]
+  pending: Initializer[];
+  result: Status;
 
 
-    //[end]
+
+
 }
+
 export class OwnerReference {
-    apiVersion: string;
-    kind: string;
-    name: string;
-    uid: string;
-    controller: boolean;
-    blockOwnerDeletion: boolean;
-    //[OwnerReference:]
+  apiVersion: string;
+  kind: string;
+  name: string;
+  uid: string;
+  controller: boolean;
+  blockOwnerDeletion: boolean;
 
 
-    //[end]
+
+
 }
 
 export class Time {
-    //[Time:]
 
 
-    //[end]
+
+
 }
+
 export class ObjectMeta {
-    name: string;
-    generateName: string;
-    namespace: string;
-    selfLink: string;
-    uid: string;
-    resourceVersion: string;
-    generation: number;
-    creationTimestamp: Time;
-    deletionTimestamp: Time;
-    deletionGracePeriodSeconds: number;
-    labels: {};
-    annotations: {};
-    ownerReferences: OwnerReference[];
-    initializers: Initializers;
-    finalizers: string[];
-    clusterName: string;
-    //[ObjectMeta:]
+  name: string;
+  generateName: string;
+  namespace: string;
+  selfLink: string;
+  uid: string;
+  resourceVersion: string;
+  generation: number;
+  creationTimestamp: Time;
+  deletionTimestamp: Time;
+  deletionGracePeriodSeconds: number;
+  labels: {};
+  annotations: {};
+  ownerReferences: OwnerReference[];
+  initializers: Initializers;
+  finalizers: string[];
+  clusterName: string;
 
 
-    //[end]
+
+
 }
+
 export class KubeJob {
-    kind: string;
-    apiVersion: string;
-    metadata: ObjectMeta;
-    spec: JobSpec;
-    status: JobStatus;
-    //[Job:]
+  kind: string;
+  apiVersion: string;
+  metadata: ObjectMeta;
+  spec: JobSpec;
+  status: JobStatus;
 
 
-    //[end]
+
+
 }

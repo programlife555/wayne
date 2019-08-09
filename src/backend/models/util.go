@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/astaxie/beego/orm"
+
 	"github.com/Qihoo360/wayne/src/backend/common"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	"github.com/astaxie/beego/orm"
 )
 
 func GetTotal(queryTable interface{}, q *common.QueryParam) (int64, error) {
@@ -33,7 +34,9 @@ func GetAll(queryTable interface{}, list interface{}, q *common.QueryParam) erro
 	if len(q.Groupby) != 0 {
 		qs = qs.GroupBy(q.Groupby...)
 	}
-	qs = qs.OrderBy(q.Sortby...)
+	if q.Sortby != "" {
+		qs = qs.OrderBy(q.Sortby)
+	}
 	if _, err := qs.Limit(q.Limit(), q.Offset()).All(list); err != nil {
 		return err
 	}
@@ -56,7 +59,7 @@ func BuildFilter(qs orm.QuerySeter, query map[string]interface{}) orm.QuerySeter
 	// query k=v
 	for k, v := range query {
 		// rewrite dot-notation to Object__Attribute
-		k = strings.Replace(k, ".", "__", -1)
+		k = strings.Replace(k, ".", ListFilterExprSep, -1)
 		qs = qs.Filter(k, v)
 	}
 	return qs

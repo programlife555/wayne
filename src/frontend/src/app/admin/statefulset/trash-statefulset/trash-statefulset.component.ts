@@ -1,15 +1,15 @@
-import {Component, Input, OnDestroy, OnInit} from '@angular/core';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {Statefulset} from '../../../shared/model/v1/statefulset';
-import {StatefulsetService} from '../../../shared/client/v1/statefulset.service';
-import {PageState} from '../../../shared/page/page-state';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../../shared/shared.const';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { Statefulset } from '../../../shared/model/v1/statefulset';
+import { StatefulsetService } from '../../../shared/client/v1/statefulset.service';
+import { PageState } from '../../../shared/page/page-state';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
 @Component({
   selector: 'trash-statefulset',
@@ -19,8 +19,8 @@ export class TrashStatefulsetComponent implements OnInit, OnDestroy {
 
   statefulsets: Statefulset[];
   pageState: PageState = new PageState();
-  state: State;
-  currentPage: number = 1;
+  state: ClrDatagridStateInterface;
+  currentPage = 1;
 
   subscription: Subscription;
 
@@ -32,7 +32,7 @@ export class TrashStatefulsetComponent implements OnInit, OnDestroy {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.TRASH_STATEFULSET) {
-        let id = message.data;
+        const id = message.data;
         this.statefulsetService.deleteById(id, 0, false)
           .subscribe(
             response => {
@@ -64,7 +64,7 @@ export class TrashStatefulsetComponent implements OnInit, OnDestroy {
   }
 
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     if (state) {
       this.state = state;
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
@@ -77,7 +77,7 @@ export class TrashStatefulsetComponent implements OnInit, OnDestroy {
     this.statefulsetService.listPage(this.pageState, 0)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.statefulsets = data.list;
@@ -87,7 +87,7 @@ export class TrashStatefulsetComponent implements OnInit, OnDestroy {
   }
 
   deleteStatefulset(statefulset: Statefulset) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除状态副本集确认',
       '你确认永久删除状态副本集 ' + statefulset.name + ' ？删除后将不可恢复！',
       statefulset.id,

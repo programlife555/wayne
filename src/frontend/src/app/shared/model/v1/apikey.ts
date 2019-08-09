@@ -1,6 +1,6 @@
 /* Do not change, this code is generated from Golang structs */
 
-import {Group} from './group';
+import { Group } from './group';
 
 export class ApiKey {
   constructor() {
@@ -19,8 +19,4 @@ export class ApiKey {
   deleted: boolean;
   createTime: Date;
   updateTime: Date;
-  //[ApiKey:]
-
-
-  //[end]
 }

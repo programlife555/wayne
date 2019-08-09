@@ -1,20 +1,20 @@
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {WebHook} from '../../../shared/model/v1/webhook';
-import {HookEvent} from '../../../shared/model/v1/hook-event';
-import {WebHookService} from '../../../shared/client/v1/webhook.service';
-import {CacheService} from '../../../shared/auth/cache.service';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { WebHook } from '../../../shared/model/v1/webhook';
+import { HookEvent } from '../../../shared/model/v1/hook-event';
+import { WebHookService } from '../../../shared/client/v1/webhook.service';
+import { CacheService } from '../../../shared/auth/cache.service';
 
 @Component({
   selector: 'create-edit-namespace-webhook',
   templateUrl: 'create-edit-namespace-webhook.component.html',
   styleUrls: ['create-edit-namespace-webhook.scss']
 })
-export class CreateEditNamespaceWebHookComponent {
+export class CreateEditNamespaceWebHookComponent implements OnInit {
   @Output() create = new EventEmitter<boolean>();
   @Output() update = new EventEmitter<boolean>();
 
@@ -44,7 +44,7 @@ export class CreateEditNamespaceWebHookComponent {
 
     this.webHookService.getEvents().subscribe(
       response => {
-        this.hookEvents = response.data
+        this.hookEvents = response.data;
       },
       error => this.messageHandlerService.handleError(error)
     );
@@ -59,7 +59,7 @@ export class CreateEditNamespaceWebHookComponent {
           this.webHook = next.data;
           this.watchEventKeys = this.webHook.events.split(',');
           this.modalOpened = true;
-        } ,
+        },
         error => {
           this.messageHandlerService.handleError(error);
         }
@@ -107,7 +107,7 @@ export class CreateEditNamespaceWebHookComponent {
         () => {
           this.currentForm.reset();
         }
-      )
+      );
     } else {
       this.webHookService.update(this.webHook).subscribe(
         next => {
@@ -124,7 +124,7 @@ export class CreateEditNamespaceWebHookComponent {
         () => {
           this.currentForm.reset();
         }
-      )
+      );
     }
   }
 
@@ -133,7 +133,7 @@ export class CreateEditNamespaceWebHookComponent {
   }
 
   validateName(): boolean {
-    let ctl = this.currentForm.controls['webhook-name'];
+    const ctl = this.currentForm.controls['webhook-name'];
     if (ctl) {
       return ctl.valid;
     }
@@ -141,7 +141,7 @@ export class CreateEditNamespaceWebHookComponent {
   }
 
   validateUrl(): boolean {
-    let ctl = this.currentForm.controls['webhook-url'];
+    const ctl = this.currentForm.controls['webhook-url'];
     if (ctl) {
       return ctl.valid;
     }

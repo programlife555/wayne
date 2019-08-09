@@ -1,25 +1,25 @@
-import {Component, ElementRef, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {isUndefined} from 'util';
-import {CronjobTpl} from '../../../shared/model/v1/cronjobtpl';
-import {Cronjob} from '../../../shared/model/v1/cronjob';
-import {CronjobTplService} from '../../../shared/client/v1/cronjobtpl.service';
-import {CronjobService} from '../../../shared/client/v1/cronjob.service';
-import {AceEditorBoxComponent} from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { isUndefined } from 'util';
+import { CronjobTpl } from '../../../shared/model/v1/cronjobtpl';
+import { Cronjob } from '../../../shared/model/v1/cronjob';
+import { CronjobTplService } from '../../../shared/client/v1/cronjobtpl.service';
+import { CronjobService } from '../../../shared/client/v1/cronjob.service';
+import { AceEditorBoxComponent } from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
 @Component({
   selector: 'create-edit-cronjobtpl',
   templateUrl: 'create-edit-cronjobtpl.component.html',
   styleUrls: ['create-edit-cronjobtpl.scss']
 })
-export class CreateEditCronjobTplComponent implements OnInit{
+export class CreateEditCronjobTplComponent implements OnInit {
   @Output() create = new EventEmitter<boolean>();
   modalOpened: boolean;
 
@@ -28,8 +28,8 @@ export class CreateEditCronjobTplComponent implements OnInit{
   currentForm: NgForm;
 
   cronjobTpl: CronjobTpl = new CronjobTpl();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
   componentName = '计划任务';
 
   title: string;
@@ -101,9 +101,9 @@ export class CreateEditCronjobTplComponent implements OnInit{
       this.isSubmitOnGoing = false;
       return;
     }
-    for (let cronjob of this.cronjobs) {
-      if (cronjob.id == this.cronjobTpl.cronjobId) {
-        this.cronjobTpl.name = cronjob.name
+    for (const cronjob of this.cronjobs) {
+      if (cronjob.id === this.cronjobTpl.cronjobId) {
+        this.cronjobTpl.name = cronjob.name;
       }
     }
     this.cronjobTpl.template = this.aceBox.getValue();

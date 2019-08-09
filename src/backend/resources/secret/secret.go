@@ -1,11 +1,12 @@
 package secret
 
 import (
-	"github.com/Qihoo360/wayne/src/backend/resources/common"
 	kapi "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+
+	"github.com/Qihoo360/wayne/src/backend/resources/common"
 )
 
 type SecretType string
@@ -30,18 +31,6 @@ func CreateOrUpdateSecret(cli *kubernetes.Clientset, secret *kapi.Secret) (*kapi
 	old.Data = secret.Data
 
 	return cli.CoreV1().Secrets(secret.Namespace).Update(old)
-}
-
-func GetSecretDetail(cli *kubernetes.Clientset, name, namespace string) (*Secret, error) {
-	secret, err := cli.CoreV1().Secrets(namespace).Get(name, metaV1.GetOptions{})
-	if err != nil {
-		return nil, err
-	}
-
-	return &Secret{
-		ObjectMeta: common.NewObjectMeta(secret.ObjectMeta),
-		Data:       secret.Data,
-	}, nil
 }
 
 func DeleteSecret(cli *kubernetes.Clientset, name, namespace string) error {

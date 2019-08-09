@@ -1,12 +1,12 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {Permission} from '../../../shared/model/v1/permission';
-import {PermissionService} from '../../../shared/client/v1/permission.service';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { Permission } from '../../../shared/model/v1/permission';
+import { PermissionService } from '../../../shared/client/v1/permission.service';
 
 @Component({
   selector: 'create-edit-permission',
@@ -23,17 +23,18 @@ export class CreateEditPermissionComponent {
 
   componentName = '操作权限';
   permission: Permission = new Permission();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
 
   permissionTitle: string;
   actionType: ActionType;
 
   constructor(
-      private permissionService: PermissionService,
-      private messageHandlerService: MessageHandlerService
-  ) {}
+    private permissionService: PermissionService,
+    private messageHandlerService: MessageHandlerService
+  ) {
+  }
 
   newOrEditPermission(id?: number) {
     this.createPermissionOpened = true;
@@ -42,7 +43,7 @@ export class CreateEditPermissionComponent {
       this.permissionTitle = '编辑权限';
       this.permissionService.getPermission(id).subscribe(
         status => {
-          this.permission = status.data
+          this.permission = status.data;
         },
         error => {
           this.messageHandlerService.handleError(error);
@@ -72,7 +73,7 @@ export class CreateEditPermissionComponent {
             this.isSubmitOnGoing = false;
             this.create.emit(true);
             this.createPermissionOpened = false;
-              this.messageHandlerService.showSuccess('创建' + this.componentName + '成功！');
+            this.messageHandlerService.showSuccess('创建' + this.componentName + '成功！');
           },
           error => {
             this.isSubmitOnGoing = false;
@@ -108,9 +109,9 @@ export class CreateEditPermissionComponent {
   }
 
   handleValidation(): void {
-    let cont = this.currentForm.controls['permission_name'];
+    const cont = this.currentForm.controls['permission_name'];
     if (cont) {
-      this.isNameValid = cont.valid
+      this.isNameValid = cont.valid;
     }
   }
 }

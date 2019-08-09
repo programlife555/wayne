@@ -1,15 +1,15 @@
-import {Component, OnDestroy, OnInit} from '@angular/core';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
-import {PersistentVolumeClaimTplService} from '../../../shared/client/v1/persistentvolumeclaimtpl.service';
-import {PersistentVolumeClaimTpl} from '../../../shared/model/v1/persistentvolumeclaimtpl';
-import {PageState} from '../../../shared/page/page-state';
+import { Component, OnDestroy, OnInit } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../../shared/shared.const';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { PersistentVolumeClaimTplService } from '../../../shared/client/v1/persistentvolumeclaimtpl.service';
+import { PersistentVolumeClaimTpl } from '../../../shared/model/v1/persistentvolumeclaimtpl';
+import { PageState } from '../../../shared/page/page-state';
 
 @Component({
   selector: 'trash-persistentvolumeclaimtpl',
@@ -19,8 +19,8 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
 
   pvcTpls: PersistentVolumeClaimTpl[];
   pageState: PageState = new PageState();
-  currentPage: number = 1;
-  state: State;
+  currentPage = 1;
+  state: ClrDatagridStateInterface;
 
   subscription: Subscription;
 
@@ -32,7 +32,7 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.TRASH_PERSISTENT_VOLUME_CLAIM_TPL) {
-        let id = message.data;
+        const id = message.data;
         this.pvcTplService.deleteById(id, 0, false)
           .subscribe(
             response => {
@@ -63,7 +63,7 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
     this.refresh(this.state);
   }
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     if (state) {
       this.state = state;
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
@@ -71,7 +71,7 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
     this.pvcTplService.list(this.pageState, 0, 'true')
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.pvcTpls = data.list;
@@ -81,7 +81,7 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
   }
 
   deletePvcTpl(tpl: PersistentVolumeClaimTpl) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除PVC确认',
       '你确认永久删除PVC模版 ' + tpl.name + ' ？删除后将不可恢复！',
       tpl.id,
@@ -91,7 +91,7 @@ export class TrashPersistentVolumeClaimTplComponent implements OnInit, OnDestroy
     this.deletionDialogService.openComfirmDialog(deletionMessage);
   }
 
-  tplDetail(tpl: PersistentVolumeClaimTpl){
+  tplDetail(tpl: PersistentVolumeClaimTpl) {
     this.aceEditorService.announceMessage(AceEditorMsg.Instance(tpl.template, false, '详情'));
   }
 

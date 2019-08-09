@@ -1,6 +1,6 @@
-import {Deployment} from './deployment';
-import {TemplateState} from '../../shared.const';
-import {PublishStatus} from './publish-status';
+import { Deployment } from './deployment';
+import { TemplateState } from '../../shared.const';
+import { PublishStatus } from './publish-status';
 
 export class DeploymentTpl {
   id: number;
@@ -11,6 +11,7 @@ export class DeploymentTpl {
   deleted: boolean;
   user: string;
   createTime: Date;
+  updateTime?: Date;
   deployment: Deployment;
 
   status: DeploymentStatus[];
@@ -33,7 +34,7 @@ export class DeploymentStatus {
   }
 
   static fromPublishStatus(state: PublishStatus) {
-    let dStatus = new DeploymentStatus();
+    const dStatus = new DeploymentStatus();
     dStatus.id = state.id;
     dStatus.deploymentId = state.resourceId;
     dStatus.templateId = state.templateId;

@@ -1,9 +1,9 @@
-import {Directive, Input, HostListener, OnDestroy, ElementRef} from '@angular/core';
-import {EventManager} from '@angular/platform-browser';
-import {TipService} from './tip.service';
+import { Directive, ElementRef, HostListener, Input, OnDestroy } from '@angular/core';
+import { EventManager } from '@angular/platform-browser';
+import { TipService } from './tip.service';
 
 @Directive({selector: '[wayneTip]'})
-export class TipDirective implements OnDestroy{
+export class TipDirective implements OnDestroy {
   private _text: string;
   private _hover: boolean;
   private _top: number;
@@ -44,7 +44,7 @@ export class TipDirective implements OnDestroy{
 
   @Input()
   set top(value: number | string) {
-    if (value || value == '0') {
+    if (value || value === '0') {
       this._top = parseInt(value + '', 10);
       if (this._hover) {
         this.tipService.close(this._text);
@@ -55,7 +55,7 @@ export class TipDirective implements OnDestroy{
 
   @Input()
   set left(value: number | string) {
-    if (value || value == '0') {
+    if (value || value === '0') {
       this._left = parseInt(value + '', 10);
       if (this._hover) {
         this.tipService.close(this._text);
@@ -64,15 +64,15 @@ export class TipDirective implements OnDestroy{
     }
   }
 
-  @HostListener('mouseenter', ['$event']) 
+  @HostListener('mouseenter', ['$event'])
   onMouseEnter(event) {
     this.enterEvent();
   }
-  
+
   enterEvent() {
     if (this._text) {
       const posiInfo = this.element.nativeElement.getClientRects()[0];
-      let message = {
+      const message = {
         top: this._top ? posiInfo.top + this._top : posiInfo.top,
         left: this._left ? posiInfo.left + this._left : posiInfo.left,
         text: this._text

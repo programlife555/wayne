@@ -4,6 +4,7 @@ export class Message {
   statusCode: number;
   message: string;
   alertType: AlertType;
+
   [propName: string]: any;
 
   public get title(): string {
@@ -21,10 +22,11 @@ export class Message {
     }
   }
 
-  constructor() { }
+  constructor() {
+  }
 
   static newMessage(statusCode: number, message: string, alertType: AlertType): Message {
-    let m = new Message();
+    const m = new Message();
     m.statusCode = statusCode;
     m.message = message;
     m.alertType = alertType;

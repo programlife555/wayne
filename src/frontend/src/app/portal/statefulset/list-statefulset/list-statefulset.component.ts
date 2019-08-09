@@ -1,30 +1,33 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
 import {
   ConfirmationButtons,
   ConfirmationState,
   ConfirmationTargets,
+  KubeResourceStatefulSet,
   ResourcesActionType,
   TemplateState
 } from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {PublishStatefulsetTplComponent} from '../publish-tpl/publish-tpl.component';
-import {ListEventComponent} from '../list-event/list-event.component';
-import {ListPodComponent} from '../list-pod/list-pod.component';
-import {TplDetailService} from '../../common/tpl-detail/tpl-detail.service';
-import {AuthService} from '../../../shared/auth/auth.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Page} from '../../../shared/page/page-state';
-import {StatefulsetTemplate} from '../../../shared/model/v1/statefulsettpl';
-import {StatefulsetService} from '../../../shared/client/v1/statefulset.service';
-import {StatefulsetTplService} from '../../../shared/client/v1/statefulsettpl.service';
-import {Event} from '../../../shared/model/v1/event';
-import {TemplateStatus} from '../../../shared/model/v1/status';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { PublishStatefulsetTplComponent } from '../publish-tpl/publish-tpl.component';
+import { ListEventComponent } from '../../../shared/list-event/list-event.component';
+import { ListPodComponent } from '../../../shared/list-pod/list-pod.component';
+import { TplDetailService } from '../../../shared/tpl-detail/tpl-detail.service';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Page } from '../../../shared/page/page-state';
+import { StatefulsetTemplate } from '../../../shared/model/v1/statefulsettpl';
+import { StatefulsetService } from '../../../shared/client/v1/statefulset.service';
+import { StatefulsetTplService } from '../../../shared/client/v1/statefulsettpl.service';
+import { Event } from '../../../shared/model/v1/event';
+import { TemplateStatus } from '../../../shared/model/v1/status';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { TranslateService } from '@ngx-translate/core';
+import { DiffService } from '../../../shared/diff/diff.service';
 
 @Component({
   selector: 'list-statefulset',
@@ -32,11 +35,12 @@ import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
   styleUrls: ['list-statefulset.scss']
 })
 export class ListStatefulsetComponent implements OnInit, OnDestroy {
+  selected: StatefulsetTemplate[] = [];
   @Input() showState: object;
   @Input() statefulsetTpls: StatefulsetTemplate[];
   @Input() page: Page;
   @Input() appId: number;
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() edit = new EventEmitter<boolean>();
   @Output() cloneTpl = new EventEmitter<StatefulsetTemplate>();
   @Output() createTpl = new EventEmitter<boolean>();
@@ -47,8 +51,8 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   listEventComponent: ListEventComponent;
   @ViewChild(PublishStatefulsetTplComponent)
   publishStatefulsetTpl: PublishStatefulsetTplComponent;
-  state: State;
-  currentPage: number = 1;
+  state: ClrDatagridStateInterface;
+  currentPage = 1;
 
   subscription: Subscription;
 
@@ -59,13 +63,15 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
               private aceEditorService: AceEditorService,
               private router: Router,
               public authService: AuthService,
+              private diffService: DiffService,
               private tplDetailService: TplDetailService,
+              public translate: TranslateService,
               private messageHandlerService: MessageHandlerService) {
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.STATEFULSET_TPL) {
-        let tplId = message.data;
+        const tplId = message.data;
         this.statefulsetTplService.deleteById(tplId, this.appId)
           .subscribe(
             response => {
@@ -89,6 +95,10 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
     }
   }
 
+  diffTpl() {
+    this.diffService.diff(this.selected);
+  }
+
   pageSizeChange(pageSize: number) {
     this.state.page.to = pageSize - 1;
     this.state.page.size = pageSize;
@@ -96,7 +106,7 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
     this.paginate.emit(this.state);
   }
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }
@@ -106,7 +116,7 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   }
 
   deleteStatefulsetTpl(tpl: StatefulsetTemplate): void {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除状态副本集模版确认',
       `你确认删除状态副本集模版${tpl.name}？`,
       tpl.id,
@@ -117,7 +127,7 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   }
 
   statefulsetTplDetail(tpl: StatefulsetTemplate): void {
-    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template),false));
+    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template), false));
   }
 
   tplDetail(tpl: StatefulsetTemplate) {
@@ -131,7 +141,7 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   publishTpl(tpl: StatefulsetTemplate) {
     this.statefulsetService.getById(tpl.statefulsetId, this.appId).subscribe(
       status => {
-        let statefulset = status.data;
+        const statefulset = status.data;
         this.publishStatefulsetTpl.newPublishTpl(statefulset, tpl, ResourcesActionType.PUBLISH);
       },
       error => {
@@ -142,7 +152,7 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   offlineStatefulset(tpl: StatefulsetTemplate) {
     this.statefulsetService.getById(tpl.statefulsetId, this.appId).subscribe(
       status => {
-        let statefulset = status.data;
+        const statefulset = status.data;
         this.publishStatefulsetTpl.newPublishTpl(statefulset, tpl, ResourcesActionType.OFFLINE);
       },
       error => {
@@ -163,8 +173,8 @@ export class ListStatefulsetComponent implements OnInit, OnDestroy {
   }
 
   listPod(status: TemplateStatus, tpl: StatefulsetTemplate) {
-    if (status.cluster && status.state != TemplateState.NOT_FOUND) {
-      this.listPodComponent.openModal(status.cluster, tpl.name);
+    if (status.cluster && status.state !== TemplateState.NOT_FOUND) {
+      this.listPodComponent.openModal(status.cluster, tpl.name, KubeResourceStatefulSet);
     }
   }
 

@@ -1,13 +1,21 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {ClusterMeta, Namespace} from '../../../shared/model/v1/namespace';
-import {NamespaceService} from '../../../shared/client/v1/namespace.service';
-import {Cluster} from '../../../shared/model/v1/cluster';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { ClusterMeta, Namespace } from '../../../shared/model/v1/namespace';
+import { NamespaceService } from '../../../shared/client/v1/namespace.service';
+import { Cluster } from '../../../shared/model/v1/cluster';
+import { NamespaceClient } from '../../../shared/client/v1/kubernetes/namespace';
+import { AceEditorBoxComponent } from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
+class Annotation {
+  key: string;
+  value: string;
+}
 @Component({
   selector: 'create-edit-namespace',
   templateUrl: 'create-edit-namespace.component.html',
@@ -16,30 +24,44 @@ import {Cluster} from '../../../shared/model/v1/cluster';
 export class CreateEditNamespaceComponent {
   @Output() create = new EventEmitter<boolean>();
   opened: boolean;
+  showACE: boolean;
   defaultMetaData = `{
   "imagePullSecrets": [],
   "env":[],
   "clusterMeta": {
   },
+  "ingressAnnotations": {
+  },
   "namespace": ""
 }`;
+  @ViewChild(AceEditorBoxComponent)
+  aceBox: any;
+
   namespaceForm: NgForm;
   @ViewChild('namespaceForm')
   currentForm: NgForm;
   ns: Namespace = new Namespace();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
+  autoCreate = false;
   nsTitle: string;
   actionType: ActionType;
 
   clusters: Cluster[];
   clusterMetas: {};
 
+  ingressAnnotations: Annotation[] = [];
+  ingressMetas: {};
+
+  serviceAnnotations: Annotation[] = [];
+  serviceMetas: {};
 
   constructor(
+    private namespaceClient: NamespaceClient,
     private namespaceService: NamespaceService,
-    private messageHandlerService: MessageHandlerService) {
+    private messageHandlerService: MessageHandlerService,
+    private aceEditorService: AceEditorService) {
   }
 
   newOrEditNamespace(clusters: Cluster[], id?: number) {
@@ -48,7 +70,7 @@ export class CreateEditNamespaceComponent {
     this.clusterMetas = {};
     this.clusters = clusters;
     if (this.clusters && this.clusters.length > 0) {
-      for (let clu of this.clusters) {
+      for (const clu of this.clusters) {
         this.clusterMetas[clu.name] = {'checked': false, 'cpu': null, 'memory': null};
       }
     }
@@ -63,6 +85,9 @@ export class CreateEditNamespaceComponent {
             this.ns.metaDataObj = Namespace.ParseNamespaceMetaData(this.ns.metaData);
           }
           this.setClusterMetas();
+          this.setIngressMetas();
+          this.setServiceMetas();
+          this.initJsonEditor();
         },
         error => {
           this.messageHandlerService.handleError(error);
@@ -73,8 +98,27 @@ export class CreateEditNamespaceComponent {
       this.nsTitle = '创建命名空间';
       this.ns = new Namespace();
       this.ns.metaDataObj = JSON.parse(this.defaultMetaData);
+      this.ingressAnnotations = [];
+      this.serviceAnnotations = [];
+      this.initJsonEditor();
     }
+  }
 
+  initJsonEditor(): void {
+    this.aceEditorService.announceMessage(AceEditorMsg.Instance(this.ns.metaDataObj));
+  }
+
+  onEditMetadata() {
+    this.showACE = !this.showACE;
+    if (!this.showACE) {
+      this.ns.metaDataObj = JSON.parse(this.aceBox.getValue());
+      this.setClusterMetas();
+      this.setIngressMetas();
+      this.setServiceMetas();
+    } else {
+      this.buildMetaDataObj();
+      this.initJsonEditor();
+    }
   }
 
   onAddEnv() {
@@ -88,6 +132,28 @@ export class CreateEditNamespaceComponent {
     this.ns.metaDataObj.env.splice(i, 1);
   }
 
+  onAddIngressAnnotations() {
+    if (!this.ns.metaDataObj.ingressAnnotations) {
+      this.ns.metaDataObj.ingressAnnotations = {};
+    }
+    this.ingressAnnotations.push({'key': '', 'value': ''});
+  }
+
+  onDeleteIngressAnnotations(i: number) {
+    this.ingressAnnotations.splice(i, 1);
+  }
+
+  onAddServiceAnnotations() {
+    if (!this.ns.metaDataObj.serviceAnnotations) {
+      this.ns.metaDataObj.serviceAnnotations = {};
+    }
+    this.serviceAnnotations.push({'key': '', 'value': ''});
+  }
+
+  onDeleteServiceAnnotations(i: number) {
+    this.serviceAnnotations.splice(i, 1);
+  }
+
   onAddSecret() {
     if (!this.ns.metaDataObj.imagePullSecrets) {
       this.ns.metaDataObj.imagePullSecrets = [];
@@ -99,34 +165,69 @@ export class CreateEditNamespaceComponent {
     this.ns.metaDataObj.imagePullSecrets.splice(i, 1);
   }
 
+
   setClusterMetas() {
     if (this.ns && this.ns.metaDataObj && this.ns.metaDataObj.clusterMeta) {
       Object.getOwnPropertyNames(this.ns.metaDataObj.clusterMeta).map(cluster => {
-        let clusterMeta = this.clusterMetas[cluster];
-        let clusterMetaData = this.ns.metaDataObj.clusterMeta[cluster];
+        const clusterMeta = this.clusterMetas[cluster];
+        const clusterMetaData = this.ns.metaDataObj.clusterMeta[cluster];
         if (clusterMeta) {
           clusterMeta.checked = true;
           clusterMeta.cpu = clusterMetaData.resourcesLimit.cpu;
           clusterMeta.memory = clusterMetaData.resourcesLimit.memory;
         }
         this.clusterMetas[cluster] = clusterMeta;
-      })
+      });
+    }
+  }
+
+  setIngressMetas() {
+    if (this.ns && this.ns.metaDataObj && this.ns.metaDataObj.ingressAnnotations) {
+      this.ingressAnnotations = [];
+      Object.getOwnPropertyNames(this.ns.metaDataObj.ingressAnnotations).map(key => {
+          this.ingressAnnotations.push({'key': key, 'value': this.ns.metaDataObj.ingressAnnotations[key]});
+      });
+    }
+  }
+
+  setServiceMetas() {
+    if (this.ns && this.ns.metaDataObj && this.ns.metaDataObj.serviceAnnotations) {
+      this.serviceAnnotations = [];
+      Object.getOwnPropertyNames(this.ns.metaDataObj.serviceAnnotations).map(key => {
+        this.serviceAnnotations.push({'key': key, 'value': this.ns.metaDataObj.serviceAnnotations[key]});
+      });
     }
   }
 
   buildMetaDataObj() {
     if (this.clusterMetas) {
       Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
-        let clusterMeta = this.clusterMetas[cluster];
+        const clusterMeta = this.clusterMetas[cluster];
         if (clusterMeta && clusterMeta.checked) {
-          let clusterMetaData = new ClusterMeta();
+          const clusterMetaData = new ClusterMeta();
           clusterMetaData.resourcesLimit.cpu = clusterMeta.cpu;
           clusterMetaData.resourcesLimit.memory = clusterMeta.memory;
           this.ns.metaDataObj.clusterMeta[cluster] = clusterMetaData;
         } else {
           this.ns.metaDataObj.clusterMeta[cluster] = undefined;
         }
-      })
+      });
+    }
+    if (this.ingressAnnotations) {
+      this.ns.metaDataObj.ingressAnnotations = {};
+      for (const a of this.ingressAnnotations) {
+        if (a.key !== '') {
+          this.ns.metaDataObj.ingressAnnotations[a.key] = a.value;
+        }
+      }
+    }
+    if (this.serviceAnnotations) {
+      this.ns.metaDataObj.serviceAnnotations = {};
+      for (const a of this.serviceAnnotations) {
+        if (a.key !== '') {
+          this.ns.metaDataObj.serviceAnnotations[a.key] = a.value;
+        }
+      }
     }
   }
 
@@ -140,6 +241,9 @@ export class CreateEditNamespaceComponent {
       return;
     }
     this.isSubmitOnGoing = true;
+    if (this.showACE) {
+      this.ns.metaDataObj = JSON.parse(this.aceBox.getValue());
+    }
     this.buildMetaDataObj();
     this.ns.metaData = JSON.stringify(this.ns.metaDataObj);
     switch (this.actionType) {
@@ -150,6 +254,25 @@ export class CreateEditNamespaceComponent {
             this.create.emit(true);
             this.opened = false;
             this.messageHandlerService.showSuccess('创建命名空间成功！');
+            if (this.autoCreate && this.clusterMetas) {
+              Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
+                const clusterMeta = this.clusterMetas[cluster];
+                if (clusterMeta && clusterMeta.checked) {
+                  this.namespaceClient.create(this.ns.kubeNamespace, cluster).subscribe(
+                    next => {
+                      if (next.data == null) {
+                        this.messageHandlerService.showSuccess(`集群 ${cluster} 已存在对应的 kubernetes namespace！`);
+                      } else {
+                        this.messageHandlerService.showSuccess(`集群 ${cluster} 创建 kubernetes namespace 成功！`);
+                      }
+                    },
+                    error => {
+                      this.messageHandlerService.handleError(error);
+                    }
+                  );
+                }
+              });
+            }
           },
           error => {
             this.isSubmitOnGoing = false;
@@ -165,6 +288,25 @@ export class CreateEditNamespaceComponent {
             this.create.emit(true);
             this.opened = false;
             this.messageHandlerService.showSuccess('更新命名空间成功！');
+            if (this.autoCreate && this.clusterMetas) {
+              Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
+                const clusterMeta = this.clusterMetas[cluster];
+                if (clusterMeta && clusterMeta.checked) {
+                  this.namespaceClient.create(this.ns.kubeNamespace, cluster).subscribe(
+                    next => {
+                      if (next.data == null) {
+                        this.messageHandlerService.showSuccess(`集群 ${cluster} 已存在对应的 kubernetes namespace！`);
+                      } else {
+                          this.messageHandlerService.showSuccess(`集群 ${cluster} 创建 kubernetes namespace 成功！`);
+                      }
+                    },
+                    error => {
+                      this.messageHandlerService.handleError(error);
+                    }
+                  );
+                }
+              });
+            }
           },
           error => {
             this.isSubmitOnGoing = false;
@@ -186,9 +328,9 @@ export class CreateEditNamespaceComponent {
 
   // Handle the form validation
   handleValidation(): void {
-    let cont = this.currentForm.controls['ns_name'];
+    const cont = this.currentForm.controls['ns_name'];
     if (cont) {
-      this.isNameValid = cont.valid
+      this.isNameValid = cont.valid;
     }
   }
 }

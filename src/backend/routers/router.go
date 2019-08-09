@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/Qihoo360/wayne/src/backend/controllers"
 	"github.com/Qihoo360/wayne/src/backend/controllers/apikey"
 	"github.com/Qihoo360/wayne/src/backend/controllers/app"
 	"github.com/Qihoo360/wayne/src/backend/controllers/appstarred"
@@ -20,15 +19,22 @@ import (
 	"github.com/Qihoo360/wayne/src/backend/controllers/cronjob"
 	"github.com/Qihoo360/wayne/src/backend/controllers/daemonset"
 	"github.com/Qihoo360/wayne/src/backend/controllers/deployment"
+	"github.com/Qihoo360/wayne/src/backend/controllers/hpa"
+	"github.com/Qihoo360/wayne/src/backend/controllers/ingress"
 	kconfigmap "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/configmap"
+	kcrd "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/crd"
 	kcronjob "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/cronjob"
 	kdaemonset "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/daemonset"
 	kdeployment "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/deployment"
+	kevent "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/event"
+	khpa "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/hpa"
+	kingress "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/ingress"
 	kjob "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/job"
 	klog "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/log"
 	knamespace "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/namespace"
 	knode "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/node"
 	kpod "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/pod"
+	"github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/proxy"
 	kpv "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/pv"
 	kpvc "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/pvc"
 	ksecret "github.com/Qihoo360/wayne/src/backend/controllers/kubernetes/secret"
@@ -49,6 +55,7 @@ import (
 	"github.com/Qihoo360/wayne/src/backend/util/hack"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/context"
+	"github.com/astaxie/beego/plugins/cors"
 )
 
 func init() {
@@ -56,6 +63,14 @@ func init() {
 	if beego.BConfig.RunMode == "dev" && path.Base(beego.AppPath) == "_build" {
 		beego.AppPath = path.Join(path.Dir(beego.AppPath), "src/backend")
 	}
+
+	beego.InsertFilter("*", beego.BeforeRouter, cors.Allow(&cors.Options{
+		AllowAllOrigins:  true,
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Authorization", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
+		ExposeHeaders:    []string{"Content-Length", "Access-Control-Allow-Origin", "Access-Control-Allow-Headers", "Content-Type"},
+		AllowCredentials: true,
+	}))
 
 	beego.Handler("/ws/pods/exec", kpod.CreateAttachHandler("/ws/pods/exec"), true)
 
@@ -160,6 +175,26 @@ func init() {
 				&apikey.ApiKeyController{},
 			),
 		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/ingresses",
+			beego.NSInclude(
+				&ingress.IngressController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/ingresses/tpls",
+			beego.NSInclude(
+				&ingress.IngressTplController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/hpas",
+			beego.NSInclude(
+				&hpa.HPAController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/hpas/tpls",
+			beego.NSInclude(
+				&hpa.HPATplController{},
+			),
+		),
 	)
 
 	nsWithKubernetes := beego.NewNamespace("/api/v1",
@@ -218,6 +253,16 @@ func init() {
 				&kservice.KubeServiceController{},
 			),
 		),
+		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/ingresses",
+			beego.NSInclude(
+				&kingress.KubeIngressController{},
+			),
+		),
+		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/hpas",
+			beego.NSInclude(
+				&khpa.KubeHPAController{},
+			),
+		),
 		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/secrets",
 			beego.NSInclude(
 				&ksecret.KubeSecretController{},
@@ -242,6 +287,10 @@ func init() {
 		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/pods",
 			beego.NSInclude(
 				&kpod.KubePodController{}),
+		),
+		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/events",
+			beego.NSInclude(
+				&kevent.KubeEventController{}),
 		),
 		beego.NSNamespace("/kubernetes/apps/:appid([0-9]+)/podlogs",
 			beego.NSInclude(
@@ -349,6 +398,36 @@ func init() {
 		),
 	)
 
+	// For Kubernetes resource router
+	// appid used to check permission
+	nsWithKubernetesProxy := beego.NewNamespace("/api/v1",
+		beego.NSNamespace("/apps/:appid([0-9]+)/_proxy/clusters/:cluster/namespaces/:namespace/:kind",
+			beego.NSInclude(
+				&proxy.KubeProxyController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/_proxy/clusters/:cluster/customresourcedefinitions",
+			beego.NSInclude(
+				&kcrd.KubeCRDController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/_proxy/clusters/:cluster/apis/:group/:version/namespaces/:namespace/:kind",
+			beego.NSInclude(
+				&kcrd.KubeCustomCRDController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/_proxy/clusters/:cluster/apis/:group/:version/:kind",
+			beego.NSInclude(
+				&kcrd.KubeCustomCRDController{},
+			),
+		),
+		beego.NSNamespace("/apps/:appid([0-9]+)/_proxy/clusters/:cluster/:kind",
+			beego.NSInclude(
+				&proxy.KubeProxyController{},
+			),
+		),
+	)
+
 	beego.AddNamespace(nsWithKubernetes)
 
 	beego.AddNamespace(nsWithKubernetesApp)
@@ -361,6 +440,5 @@ func init() {
 
 	beego.AddNamespace(nsWithOpenAPI)
 
-	beego.Router("/*", &controllers.IndexController{})
-
+	beego.AddNamespace(nsWithKubernetesProxy)
 }

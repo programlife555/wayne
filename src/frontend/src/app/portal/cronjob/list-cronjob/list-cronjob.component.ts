@@ -1,25 +1,31 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
 import {
   ConfirmationButtons,
   ConfirmationState,
   ConfirmationTargets,
+  KubeResourceCronJob,
   ResourcesActionType,
 } from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {PublishCronjobTplComponent} from '../publish-tpl/publish-tpl.component';
-import { CronjobTpl} from '../../../shared/model/v1/cronjobtpl';
-import {CronjobService} from '../../../shared/client/v1/cronjob.service';
-import {CronjobTplService} from '../../../shared/client/v1/cronjobtpl.service';
-import {TplDetailService} from '../../common/tpl-detail/tpl-detail.service';
-import {AuthService} from '../../../shared/auth/auth.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Page} from '../../../shared/page/page-state';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { PublishCronjobTplComponent } from '../publish-tpl/publish-tpl.component';
+import { CronjobStatus, CronjobTpl } from '../../../shared/model/v1/cronjobtpl';
+import { CronjobService } from '../../../shared/client/v1/cronjob.service';
+import { CronjobTplService } from '../../../shared/client/v1/cronjobtpl.service';
+import { TplDetailService } from '../../../shared/tpl-detail/tpl-detail.service';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Page } from '../../../shared/page/page-state';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { TranslateService } from '@ngx-translate/core';
+import { DiffService } from '../../../shared/diff/diff.service';
+import { ListJobComponent } from '../list-job/list-job.component';
+import { KubeCronJob } from '../../../shared/model/v1/kubernetes/cronjob';
+import { KubernetesClient } from '../../../shared/client/v1/kubernetes/kubernetes';
 
 @Component({
   selector: 'list-cronjob',
@@ -27,11 +33,15 @@ import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
   styleUrls: ['list-cronjob.scss']
 })
 export class ListCronjobComponent implements OnInit, OnDestroy {
+  @ViewChild(ListJobComponent)
+  listJob: ListJobComponent;
+
+  selected: CronjobTpl[] = [];
   @Input() showState: object;
   @Input() cronjobTpls: CronjobTpl[];
   @Input() page: Page;
   @Input() appId: number;
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() edit = new EventEmitter<boolean>();
   @Output() cloneTpl = new EventEmitter<CronjobTpl>();
   @Output() createTpl = new EventEmitter<boolean>();
@@ -39,8 +49,8 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
   @ViewChild(PublishCronjobTplComponent)
   publishCronjobTpl: PublishCronjobTplComponent;
 
-  state: State;
-  currentPage: number = 1;
+  state: ClrDatagridStateInterface;
+  currentPage = 1;
 
   subscription: Subscription;
   componentName = '计划任务';
@@ -52,13 +62,15 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
               private route: ActivatedRoute,
               private aceEditorService: AceEditorService,
               private router: Router,
+              private diffService: DiffService,
               private tplDetailService: TplDetailService,
+              public translate: TranslateService,
               private messageHandlerService: MessageHandlerService) {
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.CRONJOB_TPL) {
-        let tplId = message.data;
+        const tplId = message.data;
         this.cronjobTplService.deleteById(tplId, this.appId)
           .subscribe(
             response => {
@@ -73,6 +85,10 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
     });
   }
 
+  openJobModal(status: CronjobStatus, tpl: CronjobTpl) {
+    this.listJob.openModal(status.cluster, status.kubeObj);
+  }
+
   ngOnInit(): void {
   }
 
@@ -82,7 +98,18 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
     }
   }
 
-  refresh(state?: State) {
+  getActiveJobs(obj: KubeCronJob): number {
+    if (!obj || !obj.status) {
+      return 0;
+    }
+    return obj.status.active ? obj.status.active.length : 0;
+  }
+
+  diffTpl() {
+    this.diffService.diff(this.selected);
+  }
+
+  refresh(state?: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }
@@ -110,7 +137,7 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
   }
 
   cronjobTplDetail(tpl: CronjobTpl): void {
-    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template),false));
+    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template), false));
   }
 
   tplDetail(tpl: CronjobTpl) {
@@ -146,7 +173,7 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
   restartCronjob(tpl: CronjobTpl) {
     this.cronjobService.getById(tpl.cronjobId, this.appId).subscribe(
       status => {
-        let cronjob = status.data;
+        const cronjob = status.data;
         this.publishCronjobTpl.newPublishTpl(cronjob, tpl, ResourcesActionType.RESTART);
       },
       error => {
@@ -157,7 +184,7 @@ export class ListCronjobComponent implements OnInit, OnDestroy {
   offlineCronjobTpl(tpl: CronjobTpl) {
     this.cronjobService.getById(tpl.cronjobId, this.appId).subscribe(
       status => {
-        let cronjob = status.data;
+        const cronjob = status.data;
         this.publishCronjobTpl.newPublishTpl(cronjob, tpl, ResourcesActionType.OFFLINE);
       },
       error => {

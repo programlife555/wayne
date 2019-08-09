@@ -6,10 +6,11 @@ import (
 	"os"
 	"sync/atomic"
 
+	"github.com/streadway/amqp"
+
 	"github.com/Qihoo360/wayne/src/backend/bus"
 	"github.com/Qihoo360/wayne/src/backend/bus/message"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	"github.com/streadway/amqp"
 )
 
 var (
@@ -41,33 +42,25 @@ func NewBaseMessageWorker(b *bus.Bus, queue string) *BaseMessageWorker {
 }
 
 func (w *BaseMessageWorker) Run() error {
-	ch, err := w.Bus.Channel.Consume(w.queue, w.consumer, false, false, false, false, nil)
+	deliveryChan, err := w.Bus.Channel.Consume(w.queue, w.consumer, false, false, false, false, nil)
 	if nil != err {
 		return err
 	}
 
 	for {
 		select {
-		case delivery := <-ch:
+		case delivery := <-deliveryChan:
 			logs.Debug("Delivery received: %p", &delivery)
 			processMessage(&delivery, w)
 		case <-w.stopChan:
-			logs.Info("WebhookWorker gracefully stopped")
+			logs.Info("Worker (%s) gracefully stopped", w.queue)
 			return nil
 		}
 	}
 
-	return nil
 }
 
 func processMessage(d *amqp.Delivery, w *BaseMessageWorker) {
-	defer func() {
-		if r := recover(); r != nil {
-			logs.Critical(r)
-			d.Reject(false)
-		}
-	}()
-
 	var m message.Message
 	err := json.Unmarshal(d.Body, &m)
 	if err != nil {
@@ -84,14 +77,13 @@ func processMessage(d *amqp.Delivery, w *BaseMessageWorker) {
 
 func ackOrDie(d *amqp.Delivery, multiple bool) {
 	if err := d.Ack(multiple); err != nil { // Client heartbeats failed? Lost connection. Cannot recover.
-		logs.Critical(err)
-		panic(err)
+		logs.Error(err)
 	}
 }
 
 func (w *BaseMessageWorker) Stop() error {
 	close(w.stopChan)
 	w.Bus.Channel.Cancel(w.consumer, true)
-	logs.Debug("worker(consumer %s) stopped.", w.consumer)
+	logs.Info("worker(consumer %s) stopped.", w.consumer)
 	return nil
 }

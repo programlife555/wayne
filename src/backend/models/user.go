@@ -1,13 +1,13 @@
 package models
 
 import (
-	"strconv"
 	"time"
+
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/orm"
 
 	"github.com/Qihoo360/wayne/src/backend/util/encode"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/orm"
 )
 
 type UserType int
@@ -43,7 +43,7 @@ type User struct {
 	Name      string     `orm:"index;unique;size(200)" json:"name,omitempty"`
 	Password  string     `orm:"size(255)" json:"-"`
 	Salt      string     `orm:"size(32)" json:"-"`
-	Email     string     `orm:"unique;size(200)" json:"email,omitempty"`
+	Email     string     `orm:"size(200)" json:"email,omitempty"`
 	Display   string     `orm:"size(200)" json:"display,omitempty"`
 	Comment   string     `orm:"type(text)" json:"comment,omitempty"`
 	Type      UserType   `orm:"type(integer)" json:"type"`
@@ -94,11 +94,8 @@ func (*userModel) AddUser(m *User) (id int64, err error) {
 
 func addDefaultNamespace(user *User) (err error) {
 	// 添加默认命名空间开发者权限
-	demoNSId, err := strconv.ParseInt(beego.AppConfig.String("DemoNamespaceId"), 10, 64)
-	if err != nil {
-		return
-	}
-	demoGroupId, err := strconv.ParseInt(beego.AppConfig.String("DemoGroupId"), 10, 64)
+	demoNSId := beego.AppConfig.DefaultInt64("DemoNamespaceId", 1)
+	demoGroupId := beego.AppConfig.DefaultInt64("DemoGroupId", 1)
 	if err != nil {
 		return
 	}
@@ -165,8 +162,8 @@ func (*userModel) GetUserById(id int64) (v *User, err error) {
 
 func (*userModel) GetUserByName(name string) (v *User, err error) {
 	v = &User{Name: name}
-	if err = Ormer().Read(v, "Name"); err == nil {
-		return v, nil
+	if err = Ormer().Read(v, "Name"); err != nil {
+		return nil, err
 	}
 	return v, nil
 }

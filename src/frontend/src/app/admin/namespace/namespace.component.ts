@@ -1,25 +1,24 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {State} from '@clr/angular';
-import {ListNamespaceComponent} from './list-namespace/list-namespace.component';
-import {CreateEditNamespaceComponent} from './create-edit-namespace/create-edit-namespace.component';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {Namespace} from '../../shared/model/v1/namespace';
-import {NamespaceService} from '../../shared/client/v1/namespace.service';
-import {PageState} from '../../shared/page/page-state';
-import {ClusterService} from '../../shared/client/v1/cluster.service';
-import {Cluster} from '../../shared/model/v1/cluster';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ListNamespaceComponent } from './list-namespace/list-namespace.component';
+import { CreateEditNamespaceComponent } from './create-edit-namespace/create-edit-namespace.component';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { Namespace } from '../../shared/model/v1/namespace';
+import { NamespaceService } from '../../shared/client/v1/namespace.service';
+import { PageState } from '../../shared/page/page-state';
+import { ClusterService } from '../../shared/client/v1/cluster.service';
+import { Cluster } from '../../shared/model/v1/cluster';
 
 @Component({
   selector: 'wayne-namespace',
   templateUrl: './namespace.component.html',
   styleUrls: ['./namespace.component.scss']
 })
-export class NamespaceComponent implements OnInit {
+export class NamespaceComponent implements OnInit, OnDestroy {
   @ViewChild(ListNamespaceComponent)
   listNamespace: ListNamespaceComponent;
   @ViewChild(CreateEditNamespaceComponent)
@@ -34,17 +33,14 @@ export class NamespaceComponent implements OnInit {
 
   constructor(
     private namespaceService: NamespaceService,
-    private breadcrumbService: BreadcrumbService,
     private clusterService: ClusterService,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/namespace', '命名空间列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/namespace/trash', '已删除命名空间列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.NAMESPACE) {
-        let namespaceId = message.data;
+        const namespaceId = message.data;
         this.namespaceService.deleteNamespace(namespaceId)
           .subscribe(
             response => {
@@ -76,7 +72,7 @@ export class NamespaceComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {
         totalPage: this.pageState.page.totalPage,
@@ -86,12 +82,12 @@ export class NamespaceComponent implements OnInit {
     this.namespaceService.listNamespace(this.pageState, 'false')
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.changedNamespaces = data.list;
           if (this.changedNamespaces && this.changedNamespaces.length > 0) {
-            for (let ns of this.changedNamespaces) {
+            for (const ns of this.changedNamespaces) {
               if (!ns.metaData) {
                 ns.metaData = '{}';
               }
@@ -105,7 +101,7 @@ export class NamespaceComponent implements OnInit {
 
   createNamespace(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 

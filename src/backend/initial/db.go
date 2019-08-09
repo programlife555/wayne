@@ -6,12 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Qihoo360/wayne/src/backend/database/initial"
-	"github.com/Qihoo360/wayne/src/backend/util/logs"
 	"github.com/astaxie/beego"
 	"github.com/astaxie/beego/orm"
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"
+
+	"github.com/Qihoo360/wayne/src/backend/database/initial"
+	"github.com/Qihoo360/wayne/src/backend/util/logs"
 )
 
 const DbDriverName = "mysql"
@@ -28,10 +29,8 @@ func InitDb() {
 	if err != nil {
 		panic(err)
 	}
-	ttl, err := beego.AppConfig.Int("DBConnTTL")
-	if err != nil {
-		panic(err)
-	}
+	ttl := beego.AppConfig.DefaultInt("DBConnTTL", 30)
+
 	db.SetConnMaxLifetime(time.Duration(ttl) * time.Second)
 
 	orm.Debug = beego.AppConfig.DefaultBool("ShowSql", false)
@@ -97,5 +96,5 @@ func ensureDatabase() error {
 }
 
 func addLocation(dbURL string) string {
-	return fmt.Sprintf("%s?charset=utf8&loc=%s", dbURL, beego.AppConfig.DefaultString("DBLoc", "Asia/Shanghai"))
+	return fmt.Sprintf("%s?charset=utf8&loc=%s", dbURL, beego.AppConfig.DefaultString("DBLoc", "Asia%2FShanghai"))
 }

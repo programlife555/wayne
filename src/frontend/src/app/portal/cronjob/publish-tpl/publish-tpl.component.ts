@@ -1,17 +1,18 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ClusterMeta, Cronjob} from '../../../shared/model/v1/cronjob';
-import {CronjobStatus, CronjobTpl} from '../../../shared/model/v1/cronjobtpl';
-import {KubeCronJob} from '../../../shared/model/v1/kubernetes/cronjob';
-import {CacheService} from '../../../shared/auth/cache.service';
-import {ResourcesActionType} from '../../../shared/shared.const';
-import {PublishStatusService} from '../../../shared/client/v1/publishstatus.service';
-import {CronjobClient} from '../../../shared/client/v1/kubernetes/cronjob';
-import {ActivatedRoute} from '@angular/router';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { Cronjob } from '../../../shared/model/v1/cronjob';
+import { ClusterMeta } from '../../../shared/model/v1/cluster';
+import { CronjobStatus, CronjobTpl } from '../../../shared/model/v1/cronjobtpl';
+import { KubeCronJob } from '../../../shared/model/v1/kubernetes/cronjob';
+import { CacheService } from '../../../shared/auth/cache.service';
+import { ResourcesActionType } from '../../../shared/shared.const';
+import { PublishStatusService } from '../../../shared/client/v1/publishstatus.service';
+import { CronjobClient } from '../../../shared/client/v1/kubernetes/cronjob';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'publish-tpl',
@@ -20,7 +21,7 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class PublishCronjobTplComponent {
   @Output() published = new EventEmitter<boolean>();
-  modalOpened: boolean = false;
+  modalOpened = false;
   publishForm: NgForm;
   @ViewChild('publishForm')
   currentForm: NgForm;
@@ -29,7 +30,7 @@ export class PublishCronjobTplComponent {
   cronjobTpl: CronjobTpl;
   clusterMetas = {};
   clusters = Array<string>();
-  isSubmitOnGoing: boolean = false;
+  isSubmitOnGoing = false;
   title: string;
   actionType: ResourcesActionType;
   forceOffline: boolean;
@@ -43,12 +44,12 @@ export class PublishCronjobTplComponent {
   }
 
   get appId(): number {
-    return parseInt(this.route.parent.snapshot.params['id']);
+    return parseInt(this.route.parent.snapshot.params['id'], 10);
   }
 
 
   newPublishTpl(cronjob: Cronjob, cronjobTpl: CronjobTpl, actionType: ResourcesActionType) {
-    let replicas = this.getReplicas(cronjob);
+    const replicas = this.getReplicas(cronjob);
     this.actionType = actionType;
     this.forceOffline = false;
     if (replicas != null) {
@@ -58,15 +59,15 @@ export class PublishCronjobTplComponent {
       this.cronjobTpl = cronjobTpl;
       this.clusters = Array<string>();
       this.clusterMetas = {};
-      if (actionType == ResourcesActionType.OFFLINE || actionType == ResourcesActionType.UPDATE) {
+      if (actionType === ResourcesActionType.OFFLINE || actionType === ResourcesActionType.UPDATE) {
         cronjobTpl.status.map(state => {
           this.clusters.push(state.cluster);
           this.clusterMetas[state.cluster] = new ClusterMeta(false);
-        })
+        });
       } else if (actionType === ResourcesActionType.PUBLISH) {
         Object.getOwnPropertyNames(replicas).map(key => {
           if (this.cacheService.namespace.metaDataObj && this.cacheService.namespace.metaDataObj.clusterMeta[key]) {
-            let clusterMeta = new ClusterMeta(false);
+            const clusterMeta = new ClusterMeta(false);
             // 发布数量固定为1
             // clusterMeta.value = replicas[key];
             clusterMeta.value = 1;
@@ -98,26 +99,26 @@ export class PublishCronjobTplComponent {
 
   getStatusByCluster(status: CronjobStatus[], cluster: string): CronjobStatus {
     if (status && status.length > 0) {
-      for (let state of status) {
-        if (state.cluster == cluster) {
-          return state
+      for (const state of status) {
+        if (state.cluster === cluster) {
+          return state;
         }
       }
     }
-    return null
+    return null;
   }
 
   getReplicas(cronjob: Cronjob): {} {
     if (!cronjob.metaData) {
       this.messageHandlerService.showWarning(this.componentName + '实例数未配置，请先到编辑' + this.componentName + '配置实例数！');
-      return null
+      return null;
     }
     const replicas = JSON.parse(cronjob.metaData)['replicas'];
     if (!replicas) {
       this.messageHandlerService.showWarning(this.componentName + '实例数未配置，请先到编辑' + this.componentName + '配置实例数！');
-      return null
+      return null;
     }
-    return replicas
+    return replicas;
   }
 
   onCancel() {
@@ -153,15 +154,15 @@ export class PublishCronjobTplComponent {
   offline() {
     Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
       if (this.clusterMetas[cluster].checked) {
-        const state = this.getStatusByCluster(this.cronjobTpl.status, cluster);
+        const data = this.getStatusByCluster(this.cronjobTpl.status, cluster);
         this.cronjobClient.deleteByName(this.appId, cluster, this.cacheService.kubeNamespace, this.cronjob.name).subscribe(
           response => {
-            this.deletePublishStatus(state.id);
+            this.deletePublishStatus(data.id);
           },
           error => {
-            if (this.forceOffline){
-              this.deletePublishStatus(state.id);
-            }else {
+            if (this.forceOffline) {
+              this.deletePublishStatus(data.id);
+            } else {
               this.messageHandlerService.handleError(error);
             }
           }
@@ -203,13 +204,13 @@ export class PublishCronjobTplComponent {
   }
 
   deploy() {
-    let metaData = JSON.parse(this.cronjob.metaData);
+    const metaData = JSON.parse(this.cronjob.metaData);
     Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
-      metaData['replicas'][cluster] = this.clusterMetas[cluster].value
+      metaData['replicas'][cluster] = this.clusterMetas[cluster].value;
     });
     Object.getOwnPropertyNames(this.clusterMetas).map(cluster => {
       if (this.clusterMetas[cluster].checked) {
-        let kubeCronjob: KubeCronJob = JSON.parse(this.cronjobTpl.template);
+        const kubeCronjob: KubeCronJob = JSON.parse(this.cronjobTpl.template);
         if (metaData['successfulJobsHistoryLimit']) {
           kubeCronjob.spec.successfulJobsHistoryLimit = metaData['successfulJobsHistoryLimit'];
         }

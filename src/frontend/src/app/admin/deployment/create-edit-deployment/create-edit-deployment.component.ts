@@ -1,18 +1,18 @@
-import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {isUndefined} from 'util';
-import {App} from '../../../shared/model/v1/app';
-import {AppService} from '../../../shared/client/v1/app.service';
-import {Deployment} from '../../../shared/model/v1/deployment';
-import {DeploymentService} from '../../../shared/client/v1/deployment.service';
-import {AceEditorBoxComponent} from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { isUndefined } from 'util';
+import { App } from '../../../shared/model/v1/app';
+import { AppService } from '../../../shared/client/v1/app.service';
+import { Deployment } from '../../../shared/model/v1/deployment';
+import { DeploymentService } from '../../../shared/client/v1/deployment.service';
+import { AceEditorBoxComponent } from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
 @Component({
   selector: 'create-edit-deployment',
@@ -31,9 +31,9 @@ export class CreateEditDeploymentComponent implements OnInit {
   aceBox: any;
 
   deployment: Deployment = new Deployment();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
 
   deploymentTitle: string;
   actionType: ActionType;
@@ -65,7 +65,7 @@ export class CreateEditDeploymentComponent implements OnInit {
       this.deploymentTitle = '编辑部署';
       this.deploymentService.getById(id, 0).subscribe(
         status => {
-          this.deployment = status.data
+          this.deployment = status.data;
           this.deployment.metaDataObj = JSON.parse(this.deployment.metaData ? this.deployment.metaData : '{}');
           this.initJsonEditor();
         },
@@ -142,11 +142,11 @@ export class CreateEditDeploymentComponent implements OnInit {
       !isUndefined(this.deployment.appId);
   }
 
-  //Handle the form validation
+  // Handle the form validation
   handleValidation(): void {
-    let cont = this.currentForm.controls['deployment_name'];
+    const cont = this.currentForm.controls['deployment_name'];
     if (cont) {
-      this.isNameValid = cont.valid
+      this.isNameValid = cont.valid;
     }
 
   }

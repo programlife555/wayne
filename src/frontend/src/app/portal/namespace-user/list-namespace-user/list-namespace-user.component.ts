@@ -1,9 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Router} from '@angular/router';
-import {State} from '@clr/angular';
-import {NamespaceUser} from '../../../shared/model/v1/namespace-user';
-import {AuthService} from '../../../shared/auth/auth.service';
-import {Page} from '../../../shared/page/page-state';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { NamespaceUser } from '../../../shared/model/v1/namespace-user';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { Page } from '../../../shared/page/page-state';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'list-namespace-user',
@@ -15,16 +16,17 @@ export class ListNamespaceUserComponent implements OnInit {
   @Input() listType: string;
   @Input() namespaceUsers: NamespaceUser[];
   @Input() page: Page;
-  currentPage: number = 1;
-  state: State;
+  currentPage = 1;
+  state: ClrDatagridStateInterface;
 
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() delete = new EventEmitter<NamespaceUser>();
   @Output() edit = new EventEmitter<NamespaceUser>();
 
   constructor(
     private router: Router,
-    public authService: AuthService
+    public authService: AuthService,
+    public translate: TranslateService
   ) {
   }
 
@@ -38,7 +40,7 @@ export class ListNamespaceUserComponent implements OnInit {
     this.paginate.emit(this.state);
   }
 
-  refresh(state: State) {
+  refresh(state: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }

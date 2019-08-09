@@ -1,26 +1,25 @@
-import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {AppUser} from '../../../shared/model/v1/app-user';
-import {Group} from '../../../shared/model/v1/group';
-import {User} from '../../../shared/model/v1/user';
-import {UserService} from '../../../shared/client/v1/user.service';
-import {GroupService} from '../../../shared/client/v1/group.service';
-import {AppUserService} from '../../../shared/client/v1/app-user.service';
-import {App} from '../../../shared/model/v1/app';
-import {groupType} from '../../../shared/shared.const';
-import {PageState} from '../../../shared/page/page-state';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType, groupType } from '../../../shared/shared.const';
+import { AppUser } from '../../../shared/model/v1/app-user';
+import { Group } from '../../../shared/model/v1/group';
+import { User } from '../../../shared/model/v1/user';
+import { UserService } from '../../../shared/client/v1/user.service';
+import { GroupService } from '../../../shared/client/v1/group.service';
+import { AppUserService } from '../../../shared/client/v1/app-user.service';
+import { App } from '../../../shared/model/v1/app';
+import { PageState } from '../../../shared/page/page-state';
 
 @Component({
   selector: 'create-edit-app-user',
   templateUrl: 'create-edit-app-user.component.html',
   styleUrls: ['create-edit-app-user.scss']
 })
-export class CreateEditAppUserComponent {
+export class CreateEditAppUserComponent implements OnInit {
   @Output() create = new EventEmitter<boolean>();
   createAppUserOpened: boolean;
 
@@ -29,9 +28,9 @@ export class CreateEditAppUserComponent {
   currentForm: NgForm;
 
   appUser: AppUser;
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
 
   allGroups: Array<any>;
   mapGroups: Map<string, Group> = new Map<string, Group>();
@@ -44,31 +43,34 @@ export class CreateEditAppUserComponent {
   users: User[];
 
   constructor(
-      private userService: UserService,
-      private groupService: GroupService,
-      private appUserService: AppUserService,
-      private messageHandlerService: MessageHandlerService
-  ) {}
+    private userService: UserService,
+    private groupService: GroupService,
+    private appUserService: AppUserService,
+    private messageHandlerService: MessageHandlerService
+  ) {
+  }
 
   ngOnInit(): void {
     this.appUser = new AppUser();
     this.appUser.app = new App();
     this.appUser.user = new User();
     this.userService.getNames().subscribe(
-        response => {
-          this.users = response.data;
-        },
-        error => this.messageHandlerService.handleError(error)
-      );
+      response => {
+        this.users = response.data;
+      },
+      error => this.messageHandlerService.handleError(error)
+    );
     this.groupService.listGroup(new PageState({pageSize: 500}), groupType[0].id).subscribe(
-        response => {
-          this.allGroups = response.data.list;
-          for (let x in this.allGroups) {
+      response => {
+        this.allGroups = response.data.list;
+        for (const x in this.allGroups) {
+          if (this.allGroups.hasOwnProperty(x)) {
             this.mapGroups.set(this.allGroups[x].id.toString(), this.allGroups[x]);
           }
-        },
-        error => this.messageHandlerService.handleError(error)
-      );
+        }
+      },
+      error => this.messageHandlerService.handleError(error)
+    );
   }
 
   newOrEditAppUser(appId: string, id?: number) {
@@ -77,16 +79,20 @@ export class CreateEditAppUserComponent {
     if (id) {
       this.actionType = ActionType.EDIT;
       this.appUserTitle = '编辑项目用户';
-      this.appUserService.getById(id, parseInt(appId)).subscribe(
+      this.appUserService.getById(id, parseInt(appId, 10)).subscribe(
         status => {
-          this.appUser = status.data
+          this.appUser = status.data;
           // 编辑用户时，需要调整allGroup与selectGroup内容
-          for (let key in this.allGroups) {
-            for ( let index in this.appUser.groups ) {
-              const source = this.allGroups[key];
-              const detail = this.appUser.groups[index];
-              if ( JSON.stringify(source) === JSON.stringify(detail)) {
-                this.prepareGroups.push(this.allGroups[key].id.toString())
+          for (const key in this.allGroups) {
+            if (this.allGroups.hasOwnProperty(key)) {
+              for (const index in this.appUser.groups) {
+                if (this.appUser.groups.hasOwnProperty(index)) {
+                  const source = this.allGroups[key];
+                  const detail = this.appUser.groups[index];
+                  if (JSON.stringify(source) === JSON.stringify(detail)) {
+                    this.prepareGroups.push(this.allGroups[key].id.toString());
+                  }
+                }
               }
             }
           }
@@ -111,22 +117,22 @@ export class CreateEditAppUserComponent {
 
   getUserName(id: number): string {
     const length = this.users.length;
-    for (let i = 0; i < length; i++ ) {
+    for (let i = 0; i < length; i++) {
       if (this.users[i].id === id) {
-        return this.users[i].name
+        return this.users[i].name;
       }
     }
-    return ''
+    return '';
   }
 
   getUserId(name: string): number {
     const length = this.users.length;
-    for (let i = 0; i < length; i++ ) {
+    for (let i = 0; i < length; i++) {
       if (this.users[i].name === name) {
-        return this.users[i].id
+        return this.users[i].id;
       }
     }
-    return 0
+    return 0;
   }
 
   onSubmit() {
@@ -135,16 +141,18 @@ export class CreateEditAppUserComponent {
     }
     this.appUser.groups = new Array<Group>();
     this.isSubmitOnGoing = true;
-    for (let k in this.selectGroups) {
-      this.appUser.groups.push(this.mapGroups.get(this.selectGroups[k]));
+    for (const k in this.selectGroups) {
+      if (this.selectGroups.hasOwnProperty(k)) {
+        this.appUser.groups.push(this.mapGroups.get(this.selectGroups[k]));
+      }
     }
     switch (this.actionType) {
       case ActionType.ADD_NEW:
         // 处理user的id
-        this.appUser.user.id = this.getUserId(this.appUser.user.name)
+        this.appUser.user.id = this.getUserId(this.appUser.user.name);
         if (this.appUser.user.id === 0) {
-            this.currentForm.reset();
-            this.messageHandlerService.showError('该用户不存在！');
+          this.currentForm.reset();
+          this.messageHandlerService.showError('该用户不存在！');
         } else {
           this.appUserService.create(this.appUser).subscribe(
             status => {

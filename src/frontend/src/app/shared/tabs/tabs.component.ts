@@ -1,10 +1,9 @@
-import { Component, AfterViewInit, Inject, OnDestroy, ElementRef,  ContentChildren, QueryList } from '@angular/core';
-import {DOCUMENT} from '@angular/common';
-import {EventManager} from '@angular/platform-browser';
-import {ListStyle}  from './ListStyle';
-import {TabComponent} from './tab/tab.component';
-import {TabDragService} from '../client/v1/tab-drag.service';
-import { inject } from '../../../../node_modules/@angular/core/testing';
+import { AfterViewInit, Component, ContentChildren, ElementRef, Inject, OnDestroy, QueryList } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+import { EventManager } from '@angular/platform-browser';
+import { ListStyle } from './ListStyle';
+import { TabComponent } from './tab/tab.component';
+import { TabDragService } from '../client/v1/tab-drag.service';
 
 @Component({
   selector: 'wayne-tabs',
@@ -13,21 +12,24 @@ import { inject } from '../../../../node_modules/@angular/core/testing';
 })
 export class TabsComponent implements AfterViewInit, OnDestroy {
   // margin 指的是tabs-box-inner的margin值。
-  margin: number = 40;
+  margin = 40;
   listStyle: ListStyle = new ListStyle();
-  showViewPager: boolean = false;
+  showViewPager = false;
   tabsContent: Element;
   tabsList: Element;
   tabsContentWidth: number;
   tabsListWidth: number;
-  firstEnter: boolean = true;
+  firstEnter = true;
   resizeTimer: any;
-  prevDisabled: boolean = true;
-  nextDisabled: boolean = false;
+  prevDisabled = true;
+  nextDisabled = false;
   dragSubscribe: Array<any> = new Array();
-  eventList: Array<any> = new Array();
+  eventList: Array<Function> = new Array();
+  clickList: Array<Function> = new Array();
+  _searchContent: string;
+  _tabs: QueryList<any>;
 
-  constructor( 
+  constructor(
     private el: ElementRef,
     private eventManager: EventManager,
     private dragService: TabDragService,
@@ -38,22 +40,50 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
         direction => {
           if (direction === 'right') {
             if (this.listStyle.translateX > (this.tabsContentWidth - this.tabsListWidth)) {
-              this.listStyle.translateX = this.listStyle.translateX < (this.tabsContentWidth - this.tabsListWidth + 10) ? this.tabsContentWidth - this.tabsListWidth : this.listStyle.translateX - 10;
+              this.listStyle.translateX = this.listStyle.translateX < (this.tabsContentWidth - this.tabsListWidth + 10) ?
+                this.tabsContentWidth - this.tabsListWidth : this.listStyle.translateX - 10;
             }
           } else if (direction === 'left') {
             if (this.listStyle.translateX < 0) {
-              this.listStyle.translateX = this.listStyle.translateX > - 10 ? 0 : this.listStyle.translateX + 10;
-            } 
+              this.listStyle.translateX = this.listStyle.translateX > -10 ? 0 : this.listStyle.translateX + 10;
+            }
           }
         }
       )
-    )
+    );
+  }
+
+  get tabsNum(): number {
+    return this._tabs.length;
+  }
+
+  get searchContent() {
+    return this._searchContent;
+  }
+
+  set searchContent(value: string) {
+    if (value !== this._searchContent) {
+      this._searchContent = value;
+      this.filtertabs();
+    }
+  }
+
+  filtertabs() {
+    this._tabs.forEach(item => {
+      const el = item.el.nativeElement;
+      el.classList.remove('hide');
+      if (el.innerText.indexOf(this.searchContent) === -1) {
+        el.classList.add('hide');
+      }
+      this.boxResize();
+    });
   }
 
   ngOnDestroy() {
     this.dragSubscribe.forEach(subscribe => {
       subscribe.unsubscribe();
     });
+    this.removeClickEvent();
     this.eventList.forEach(event => {
       event();
     });
@@ -61,11 +91,13 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
   }
 
   @ContentChildren(TabComponent) set tabs(tabs: QueryList<any>) {
+    this._tabs = tabs;
+    this.removeClickEvent();
     this.addClickEvent(tabs);
     this.setActive(tabs);
-    if (!this.firstEnter) this.boxResize();
+    if (!this.firstEnter) { this.boxResize(); }
     this.firstEnter = false;
-  };
+  }
 
   prevEnter() {
     if (this.listStyle.translateX) {
@@ -92,16 +124,24 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
   }
 
   get listTransform() {
-    return this.listStyle.translateX ? `translateX(${this.listStyle.translateX}px)` : ''
+    return this.listStyle.translateX ? `translateX(${this.listStyle.translateX}px)` : '';
   }
 
-  addClickEvent (tmpList: QueryList<any>) {
+  removeClickEvent() {
+    this.clickList.forEach(func => {
+      func();
+    });
+  }
+
+  addClickEvent(tmpList: QueryList<any>) {
     tmpList.forEach((template, index) => {
-      this.eventManager.addEventListener(template.el.nativeElement, 'click', this.setActive.bind(this, tmpList));
-    })
+      this.clickList.push(
+        this.eventManager.addEventListener(template.el.nativeElement, 'click', this.setActive.bind(this, tmpList))
+      );
+    });
   }
 
-  setActive (tmpList: QueryList<any>) {
+  setActive(tmpList: QueryList<any>) {
     let existActive = false;
     tmpList.forEach((template, index) => {
       if (template.active) {
@@ -111,7 +151,7 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
       } else {
         template.el.nativeElement.querySelector('.tabs-item').classList.remove('active');
       }
-    })
+    });
   }
 
   ngAfterViewInit() {
@@ -123,23 +163,23 @@ export class TabsComponent implements AfterViewInit, OnDestroy {
       this.showViewPager = true;
       this.tabsContentWidth -= 2 * this.margin;
     }
-    if (typeof window !== 'undefined') window.onresize = this.boxResize.bind(this);
+    if (typeof window !== 'undefined') { window.onresize = this.boxResize.bind(this); }
     this.dragService.init(this.el.nativeElement);
     this.eventList.push(
       this.eventManager.addEventListener(this.document.querySelector('.nav-trigger'), 'click', this.boxResize.bind(this, true))
-    )
+    );
   }
 
   prev() {
     const currentWidth = this.tabsListWidth + this.listStyle.translateX;
     if (Math.abs(this.listStyle.translateX) < this.tabsContentWidth) {
-      this.listStyle.translateX = 0
+      this.listStyle.translateX = 0;
     } else {
       this.listStyle.translateX += this.tabsContentWidth;
     }
     this.prevEnter();
   }
-  
+
   next() {
     const currentWidth = this.tabsListWidth + this.listStyle.translateX;
     // 这里不用缓冲是为了解决在tab切换时候出现滚动条会遮挡最后一个tab的情况。

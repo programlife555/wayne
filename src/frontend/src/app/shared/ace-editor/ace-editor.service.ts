@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs/Subject';
-import {AceEditorMsg} from './ace-editor';
+import { AceEditorMsg } from './ace-editor';
 
 @Injectable()
 export class AceEditorService {
@@ -13,10 +13,6 @@ export class AceEditorService {
 
   announceMessage(message: AceEditorMsg) {
     this.aceMessageAnnouncedSource.next(message);
-  }
-
-  ngOnInit(): void {
-
   }
 
   clear() {

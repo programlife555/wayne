@@ -1,7 +1,6 @@
 package pod
 
 import (
-	"fmt"
 	"sync"
 
 	"github.com/Qihoo360/wayne/src/backend/client"
@@ -16,26 +15,22 @@ type KubePodController struct {
 }
 
 func (c *KubePodController) URLMapping() {
-	c.Mapping("Get", c.Get)
-	c.Mapping("Delete", c.Delete)
+	c.Mapping("PodStatistics", c.PodStatistics)
 	c.Mapping("List", c.List)
+	c.Mapping("Terminal", c.Terminal)
 }
 
 func (c *KubePodController) Prepare() {
 	// Check administration
 	c.APIController.Prepare()
 
-	perAction := ""
+	methodActionMap := map[string]string{
+		"PodStatistics": models.PermissionRead,
+		"List":          models.PermissionRead,
+		"Terminal":      models.PermissionRead,
+	}
 	_, method := c.GetControllerAndAction()
-	switch method {
-	case "Get", "List":
-		perAction = models.PermissionRead
-	case "Delete":
-		perAction = models.PermissionDelete
-	}
-	if perAction != "" {
-		c.CheckPermission(models.PermissionTypeDeployment, perAction)
-	}
+	c.PreparePermission(methodActionMap, method, models.PermissionTypeKubePod)
 }
 
 // @Title kubernetes pod statistics
@@ -50,15 +45,23 @@ func (c *KubePodController) PodStatistics() {
 	if cluster == "" {
 		managers := client.Managers()
 		wg := sync.WaitGroup{}
-		for _, manager := range managers {
+
+		managers.Range(func(key, value interface{}) bool {
+			manager := value.(*client.ClusterManager)
 			wg.Add(1)
 			go func(manager *client.ClusterManager) {
 				defer wg.Done()
-				count := pod.GetPodCounts(manager.Indexer)
+				count, err := pod.GetPodCounts(manager.CacheFactory)
+				if err != nil {
+					logs.Error("get pod counts error.", key, err)
+					return
+				}
 				total += count
 				countSyncMap.Store(manager.Cluster.Name, count)
 			}(manager)
-		}
+			return true
+		})
+
 		wg.Wait()
 		countSyncMap.Range(func(key, value interface{}) bool {
 			countMap[key.(string)] = value.(int)
@@ -68,7 +71,11 @@ func (c *KubePodController) PodStatistics() {
 	} else {
 		manager, err := client.Manager(cluster)
 		if err == nil {
-			count := pod.GetPodCounts(manager.Indexer)
+			count, err := pod.GetPodCounts(manager.CacheFactory)
+			if err != nil {
+				c.HandleError(err)
+				return
+			}
 			total += count
 		} else {
 			c.HandleError(err)
@@ -81,87 +88,25 @@ func (c *KubePodController) PodStatistics() {
 }
 
 // @Title List
-// @Description find pods by deployment
-// @Param	deployment		query 	string	true		"the deployment name."
-// @Param	statefulset		query 	string	true		"the statefulset name."
+// @Description find pods by resource type
+// @Param	pageNo		query 	int	false		"the page current no"
+// @Param	pageSize		query 	int	false		"the page size"
+// @Param	type		query 	string	true		"the query type. deployment, statefulset, daemonSet, job, pod"
+// @Param	name		query 	string	true		"the query resource name."
 // @Success 200 {object} models.Deployment success
 // @router /namespaces/:namespace/clusters/:cluster [get]
 func (c *KubePodController) List() {
 	cluster := c.Ctx.Input.Param(":cluster")
 	namespace := c.Ctx.Input.Param(":namespace")
-	deployment := c.Input().Get("deployment")
-	statefulset := c.Input().Get("statefulset")
-	daemonSet := c.Input().Get("daemonSet")
-	job := c.Input().Get("job")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		var result interface{}
-		var err error
-		if deployment != "" {
-			result, err = pod.GetPodsByDeployment(cli, namespace, deployment)
-		} else if statefulset != "" {
-			result, err = pod.GetPodsByStatefulset(cli, namespace, statefulset)
-		} else if daemonSet != "" {
-			result, err = pod.GetPodsByDaemonSet(cli, namespace, daemonSet)
-		} else if job != "" {
-			result, err = pod.GetPodsByJob(cli, namespace, job)
-		} else {
-			err = fmt.Errorf("unkown resource type. ")
-		}
-		if err != nil {
-			logs.Error("get kubernetes pod error.", cluster, namespace, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success(result)
-	} else {
-		c.AbortBadRequestFormat("Cluster")
+	resourceType := c.Input().Get("type")
+	resourceName := c.Input().Get("name")
+	param := c.BuildKubernetesQueryParam()
+	manager := c.Manager(cluster)
+	result, err := pod.GetPodListPageByType(manager.KubeClient, namespace, resourceName, resourceType, param)
+	if err != nil {
+		logs.Error("Get kubernetes pod by type error.", cluster, namespace, resourceType, resourceName, err)
+		c.HandleError(err)
+		return
 	}
-}
-
-// @Title Get
-// @Description find Deployment by cluster
-// @Success 200 {object} models.Deployment success
-// @router /:pod/namespaces/:namespace/clusters/:cluster [get]
-func (c *KubePodController) Get() {
-	cluster := c.Ctx.Input.Param(":cluster")
-	namespace := c.Ctx.Input.Param(":namespace")
-	name := c.Ctx.Input.Param(":pod")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		result, err := pod.GetPodByName(cli, namespace, name)
-		if err != nil {
-			logs.Error("get kubernetes pod detail error.", cluster, namespace, name, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success(result)
-	} else {
-		c.AbortBadRequestFormat("Cluster")
-	}
-}
-
-// @Title Delete
-// @Description delete the Pod
-// @Param	cluster		path 	string	true		"the cluster want to delete"
-// @Param	namespace		path 	string	true		"the namespace want to delete"
-// @Param	pod		path 	string	true		"the pod name want to delete"
-// @Success 200 {string} delete success!
-// @router /:pod/namespaces/:namespace/clusters/:cluster [delete]
-func (c *KubePodController) Delete() {
-	cluster := c.Ctx.Input.Param(":cluster")
-	namespace := c.Ctx.Input.Param(":namespace")
-	name := c.Ctx.Input.Param(":pod")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		err := pod.DeletePod(cli, name, namespace)
-		if err != nil {
-			logs.Error("delete pod (%s) by cluster (%s) error.%v", name, cluster, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success("ok!")
-	} else {
-		c.AbortBadRequestFormat("Cluster")
-	}
+	c.Success(result)
 }

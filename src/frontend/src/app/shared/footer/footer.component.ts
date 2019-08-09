@@ -6,10 +6,11 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./footer.component.scss']
 })
 export class FooterComponent implements OnInit {
-  version: String = require('../../../../package.json').version;
-  year: String = new Date().getFullYear().toString();
+  version = require('../../../../package.json').version;
+  year = new Date().getFullYear().toString();
 
-  constructor() { }
+  constructor() {
+  }
 
   ngOnInit() {
   }

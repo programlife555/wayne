@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Router} from '@angular/router';
-import {State} from '@clr/angular';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {Permission} from '../../../shared/model/v1/permission';
-import {PermissionService} from '../../../shared/client/v1/permission.service';
-import {Page} from '../../../shared/page/page-state';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { Permission } from '../../../shared/model/v1/permission';
+import { PermissionService } from '../../../shared/client/v1/permission.service';
+import { Page } from '../../../shared/page/page-state';
 
 @Component({
   selector: 'list-permission',
@@ -15,19 +15,19 @@ export class ListPermissionComponent implements OnInit {
   @Input() permissions: Permission[];
 
   @Input() page: Page;
-  currentPage: number = 1;
-  state: State;
+  currentPage = 1;
+  state: ClrDatagridStateInterface;
 
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() delete = new EventEmitter<Permission>();
   @Output() edit = new EventEmitter<Permission>();
 
-    constructor(
-        private permissionService: PermissionService,
-        private messageHandlerService: MessageHandlerService,
-        private router: Router
-    ) {
-    }
+  constructor(
+    private permissionService: PermissionService,
+    private messageHandlerService: MessageHandlerService,
+    private router: Router
+  ) {
+  }
 
   ngOnInit(): void {
   }
@@ -39,7 +39,7 @@ export class ListPermissionComponent implements OnInit {
     this.paginate.emit(this.state);
   }
 
-  refresh(state: State) {
+  refresh(state: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/astaxie/beego/orm"
+	"github.com/go-sql-driver/mysql"
+
 	"github.com/Qihoo360/wayne/src/backend/common"
 )
 
@@ -15,7 +18,7 @@ type appModel struct{}
 
 type App struct {
 	Id        int64      `orm:"auto" json:"id,omitempty"`
-	Name      string     `orm:"unique;index;size(128)" json:"name,omitempty"`
+	Name      string     `orm:"index;size(128)" json:"name,omitempty"`
 	Namespace *Namespace `orm:"index;column(namespace_id);rel(fk)" json:"namespace"`
 	/*
 		{
@@ -84,6 +87,10 @@ func (*appModel) List(q *common.QueryParam, starred bool, userId int64) (apps []
 	if err != nil {
 		return nil, err
 	}
+	for i := 0; i < len(apps); i++ {
+		apps[i].App.Namespace = &Namespace{Id: apps[i].NamespaceId}
+	}
+
 	return
 }
 
@@ -122,11 +129,30 @@ func (*appModel) GetNames(deleted bool) ([]App, error) {
 	return apps, nil
 }
 
-func (*appModel) Add(m *App) (id int64, err error) {
-	// 创建项目
-	id, err = Ormer().Insert(m)
-	if err != nil {
+func (m *appModel) GetAppsByNamespaceId(nid int64, deleted bool) (apps []App, err error) {
+	qs := Ormer().QueryTable(TableNameApp).RelatedSel(TableNameNamespace).
+		Filter("namespace__id__exact", nid).
+		Filter("deleted__exact", deleted)
+	if _, err = qs.All(&apps); err != nil {
 		return
+	}
+	return
+}
+
+func (m *appModel) Add(a *App) (id int64, err error) {
+	// add app
+	err = Ormer().Read(a, "name", "namespace_id")
+	if err != nil {
+		// Apps with duplicate names are not allowed to appear under the same namespace
+		if err == orm.ErrNoRows {
+			id, err = Ormer().Insert(a)
+			return
+		}
+	}
+
+	err = &mysql.MySQLError{
+		Number:  1062,
+		Message: "Resources already exist!",
 	}
 	return
 }
@@ -172,6 +198,14 @@ func (*appModel) DeleteById(id int64, logical bool) (err error) {
 func (*appModel) GetByName(name string) (a *App, err error) {
 	a = &App{Name: name}
 	if err = Ormer().Read(a, "name"); err == nil {
+		return a, nil
+	}
+	return nil, err
+}
+
+func (*appModel) GetByNameAndDeleted(name string, deleted bool) (a *App, err error) {
+	a = &App{Name: name, Deleted: deleted}
+	if err = Ormer().Read(a, "name", "deleted"); err == nil {
 		return a, nil
 	}
 	return nil, err

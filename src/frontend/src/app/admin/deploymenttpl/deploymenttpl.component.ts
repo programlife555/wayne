@@ -1,24 +1,24 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {Router, ActivatedRoute, Params} from '@angular/router';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {ListDeploymentTplComponent} from './list-deploymenttpl/list-deploymenttpl.component';
-import {CreateEditDeploymentTplComponent} from './create-edit-deploymenttpl/create-edit-deploymenttpl.component';
-import {DeploymentTpl} from '../../shared/model/v1/deploymenttpl';
-import {DeploymentTplService} from '../../shared/client/v1/deploymenttpl.service';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { ListDeploymentTplComponent } from './list-deploymenttpl/list-deploymenttpl.component';
+import { CreateEditDeploymentTplComponent } from './create-edit-deploymenttpl/create-edit-deploymenttpl.component';
+import { DeploymentTpl } from '../../shared/model/v1/deploymenttpl';
+import { DeploymentTplService } from '../../shared/client/v1/deploymenttpl.service';
+import { PageState } from '../../shared/page/page-state';
+import { isNotEmpty } from '../../shared/utils';
 
 @Component({
   selector: 'wayne-deploymenttpl',
   templateUrl: './deploymenttpl.component.html',
   styleUrls: ['./deploymenttpl.component.scss']
 })
-export class DeploymentTplComponent implements OnInit {
+export class DeploymentTplComponent implements OnInit, OnDestroy {
 
   @ViewChild(ListDeploymentTplComponent)
   listDeployment: ListDeploymentTplComponent;
@@ -31,18 +31,15 @@ export class DeploymentTplComponent implements OnInit {
   subscription: Subscription;
 
   constructor(
-    private breadcrumbService: BreadcrumbService,
     private deploymentTplService: DeploymentTplService,
     private route: ActivatedRoute,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/deployment/tpl', '部署模板列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/deployment/tpl/trash', '已删除部署模板列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.DEPLOYMENT_TPL) {
-        let id = message.data;
+        const id = message.data;
         this.deploymentTplService.deleteById(id, 0)
           .subscribe(
             response => {
@@ -60,10 +57,10 @@ export class DeploymentTplComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.deploymentId = params['did'];
-      if (typeof(this.deploymentId) == 'undefined') {
-          this.deploymentId = ''
+      if (typeof (this.deploymentId) === 'undefined') {
+        this.deploymentId = '';
       }
-    })
+    });
   }
 
   ngOnDestroy(): void {
@@ -72,15 +69,23 @@ export class DeploymentTplComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
     }
     this.pageState.params['deleted'] = false;
+    if (this.route.snapshot.queryParams) {
+      Object.getOwnPropertyNames(this.route.snapshot.queryParams).map(key => {
+        const value = this.route.snapshot.queryParams[key];
+        if (isNotEmpty(value)) {
+          this.pageState.filters[key] = value;
+        }
+      });
+    }
     this.deploymentTplService.listPage(this.pageState, 0, this.deploymentId)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.changedDeployments = data.list;
@@ -91,7 +96,7 @@ export class DeploymentTplComponent implements OnInit {
 
   createDeployment(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -100,7 +105,7 @@ export class DeploymentTplComponent implements OnInit {
   }
 
   deleteDeployment(tpl: DeploymentTpl) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除部署模版确认',
       '你确认删除部署模版 ' + tpl.name + ' ？',
       tpl.id,

@@ -1,19 +1,17 @@
-import {Component, EventEmitter, Input, Output, ViewChild} from '@angular/core';
-import {PersistentVolumeClaimClient} from '../../../shared/client/v1/kubernetes/persistentvolumeclaims';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {NgForm} from '@angular/forms';
-import {PublishStatus} from '../../../shared/model/v1/publish-status';
-import {ActivatedRoute} from '@angular/router';
-import {PersistentVolumeClaimRobinClient} from '../../../shared/client/v1/kubernetes/persistentvolumeclaims-robin';
+import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
+import { PersistentVolumeClaimClient } from '../../../shared/client/v1/kubernetes/persistentvolumeclaims';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { NgForm } from '@angular/forms';
+import { PublishStatus } from '../../../shared/model/v1/publish-status';
+import { ActivatedRoute } from '@angular/router';
+import { PersistentVolumeClaimRobinClient } from '../../../shared/client/v1/kubernetes/persistentvolumeclaims-robin';
 
 @Component({
   selector: 'create-snapshot',
   templateUrl: 'create-snapshot.component.html',
   styleUrls: ['create-snapshot.scss']
 })
-
-
-export class CreateSnapshot {
+export class CreateSnapshotComponent {
   createAppOpened: boolean;
   snapForm: NgForm;
   @ViewChild('snapForm')
@@ -49,7 +47,8 @@ export class CreateSnapshot {
   }
 
   onSubmit() {
-    this.persistentVolumeClaimRobinClient.createSnapshot(this.appId, this.state.cluster, this.state.pvc.metadata.namespace, this.state.pvc.metadata.name, this.snapshotVersion).subscribe(
+    this.persistentVolumeClaimRobinClient.createSnapshot(this.appId, this.state.cluster,
+      this.state.pvc.metadata.namespace, this.state.pvc.metadata.name, this.snapshotVersion).subscribe(
       response => {
         this.messageHandlerService.showSuccess('创建快照成功！');
         this.create.emit(true);

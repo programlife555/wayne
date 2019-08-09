@@ -3,10 +3,11 @@ package daemonset
 import (
 	"strings"
 
-	"github.com/Qihoo360/wayne/src/backend/models"
-	"github.com/Qihoo360/wayne/src/backend/util"
 	"k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
+
+	"github.com/Qihoo360/wayne/src/backend/models"
+	"github.com/Qihoo360/wayne/src/backend/util"
 )
 
 func daemonSetPreDeploy(kubeDaemonSet *v1beta1.DaemonSet, daemonSet *models.DaemonSet,
@@ -73,7 +74,7 @@ func daemonSetPreDeploy(kubeDaemonSet *v1beta1.DaemonSet, daemonSet *models.Daem
 		kubeDaemonSet.Spec.Template.Spec.Containers[i].SecurityContext.Privileged = privileged
 	}
 	// step 5 set namespace
-	kubeDaemonSet.Namespace = namespace.MetaDataObj.Namespace
+	kubeDaemonSet.Namespace = namespace.KubeNamespace
 
 	// step 6
 	if kubeDaemonSet.Spec.Template.Annotations == nil {

@@ -4,12 +4,13 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/astaxie/beego"
+
 	"github.com/Qihoo360/wayne/src/backend/common"
 	"github.com/Qihoo360/wayne/src/backend/controllers/base"
 	"github.com/Qihoo360/wayne/src/backend/models"
 	"github.com/Qihoo360/wayne/src/backend/util"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	"github.com/astaxie/beego"
 )
 
 type BaseConfigController struct {
@@ -33,7 +34,7 @@ func (c *BaseConfigController) ListBase() {
 	configMap["namespaceLabelKey"] = util.NamespaceLabelKey
 	configMap["enableRobin"] = beego.AppConfig.DefaultBool("EnableRobin", false)
 	configMap["ldapLogin"] = parseAuthEnabled("auth.ldap")
-	configMap["qihooLogin"] = parseAuthEnabled("auth.qihoo")
+	configMap["oauth2Login"] = parseAuthEnabled("auth.oauth2")
 	configMap["enableApiKeys"] = beego.AppConfig.DefaultBool("EnableApiKeys", false)
 
 	var configs []models.Config

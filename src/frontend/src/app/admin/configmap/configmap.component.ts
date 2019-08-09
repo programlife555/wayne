@@ -1,24 +1,23 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {Router, ActivatedRoute, Params} from '@angular/router';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {CreateEditConfigMapComponent} from './create-edit-configmap/create-edit-configmap.component';
-import {ListConfigMapComponent} from './list-configmap/list-configmap.component';
-import {ConfigMap} from '../../shared/model/v1/configmap';
-import {ConfigMapService} from '../../shared/client/v1/configmap.service';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { CreateEditConfigMapComponent } from './create-edit-configmap/create-edit-configmap.component';
+import { ListConfigMapComponent } from './list-configmap/list-configmap.component';
+import { ConfigMap } from '../../shared/model/v1/configmap';
+import { ConfigMapService } from '../../shared/client/v1/configmap.service';
+import { PageState } from '../../shared/page/page-state';
 
 @Component({
   selector: 'wayne-configmap',
   templateUrl: './configmap.component.html',
   styleUrls: ['./configmap.component.scss']
 })
-export class ConfigMapComponent implements OnInit {
+export class ConfigMapComponent implements OnInit, OnDestroy {
   @ViewChild(ListConfigMapComponent)
   list: ListConfigMapComponent;
   @ViewChild(CreateEditConfigMapComponent)
@@ -31,17 +30,14 @@ export class ConfigMapComponent implements OnInit {
 
   constructor(
     private configMapService: ConfigMapService,
-    private breadcrumbService: BreadcrumbService,
     private route: ActivatedRoute,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/configmap', '配置集列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/configmap/trash', '已删除配置集列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.CONFIGMAP) {
-        let id = message.data;
+        const id = message.data;
         this.configMapService.deleteById(id, 0)
           .subscribe(
             response => {
@@ -65,14 +61,14 @@ export class ConfigMapComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
     }
     this.configMapService.list(this.pageState, 'false', '0')
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.configMaps = data.list;
@@ -83,7 +79,7 @@ export class ConfigMapComponent implements OnInit {
 
   createConfigMap(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -92,7 +88,7 @@ export class ConfigMapComponent implements OnInit {
   }
 
   deleteConfigMap(configMap: ConfigMap) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除配置集确认',
       '你确认删除配置集 ' + configMap.name + ' ？',
       configMap.id,

@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"sync"
 
+	"k8s.io/api/core/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+
 	"github.com/Qihoo360/wayne/src/backend/client"
 	"github.com/Qihoo360/wayne/src/backend/controllers/base"
+	"github.com/Qihoo360/wayne/src/backend/models"
 	"github.com/Qihoo360/wayne/src/backend/resources/node"
 	"github.com/Qihoo360/wayne/src/backend/util/logs"
-	"k8s.io/api/core/v1"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/client-go/kubernetes"
 )
 
 type KubeNodeController struct {
@@ -22,15 +22,22 @@ func (c *KubeNodeController) URLMapping() {
 	c.Mapping("NodeStatistics", c.NodeStatistics)
 	c.Mapping("List", c.List)
 	c.Mapping("Update", c.Update)
+	c.Mapping("Get", c.Get)
 	c.Mapping("Delete", c.Delete)
 }
 
 func (c *KubeNodeController) Prepare() {
 	// Check administration
 	c.APIController.Prepare()
-	if !c.User.Admin {
-		c.AbortForbidden("Operation need admin permission..")
+	methodActionMap := map[string]string{
+		"NodeStatistics": models.PermissionRead,
+		"List":           models.PermissionRead,
+		"Get":            models.PermissionRead,
+		"Update":         models.PermissionUpdate,
+		"Delete":         models.PermissionDelete,
 	}
+	_, method := c.GetControllerAndAction()
+	c.PreparePermission(methodActionMap, method, models.PermissionTypeKubeNode)
 }
 
 // @Title kubernetes node statistics
@@ -44,23 +51,27 @@ func (c *KubeNodeController) NodeStatistics() {
 	countSyncMap := sync.Map{}
 	countMap := make(map[string]int)
 	if cluster == "" {
-		clients := client.Clients()
+		managers := client.Managers()
 		var errs []error
 		wg := sync.WaitGroup{}
-		for clu, cli := range clients {
+
+		managers.Range(func(key, value interface{}) bool {
+			manager := value.(*client.ClusterManager)
+			clu := key.(string)
 			wg.Add(1)
-			go func(clu string, cli *kubernetes.Clientset) {
+			go func(clu string, mang *client.ClusterManager) {
 				defer wg.Done()
-				count, err := node.GetNodeCounts(cli)
+				count, err := node.GetNodeCounts(mang.CacheFactory)
 				if err != nil {
 					logs.Error("get k8s nodes count error. %v", err.Error())
 					errs = append(errs, err)
 				}
 				total += count
 				countSyncMap.Store(clu, count)
-			}(clu, cli)
+			}(clu, manager)
+			return true
+		})
 
-		}
 		wg.Wait()
 		if len(errs) > 0 {
 			c.HandleError(utilerrors.NewAggregate(errs))
@@ -71,9 +82,9 @@ func (c *KubeNodeController) NodeStatistics() {
 			return true
 		})
 	} else {
-		cli, err := client.Client(cluster)
+		manager, err := client.Manager(cluster)
 		if err == nil {
-			count, err := node.GetNodeCounts(cli)
+			count, err := node.GetNodeCounts(manager.CacheFactory)
 			if err != nil {
 				logs.Error("get k8s nodes count error. %v", err.Error())
 				c.HandleError(err)
@@ -94,18 +105,14 @@ func (c *KubeNodeController) NodeStatistics() {
 // @router /clusters/:cluster [get]
 func (c *KubeNodeController) List() {
 	cluster := c.Ctx.Input.Param(":cluster")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		result, err := node.ListNode(cli, metaV1.ListOptions{})
-		if err != nil {
-			logs.Error("list node by cluster (%s) error.%v", cluster, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success(result)
-	} else {
-		c.AbortBadRequestFormat("Cluster")
+	manager := c.Manager(cluster)
+	result, err := node.ListNode(manager.CacheFactory)
+	if err != nil {
+		logs.Error("list node by cluster (%s) error.%v", cluster, err)
+		c.HandleError(err)
+		return
 	}
+	c.Success(result)
 }
 
 // @Title get node
@@ -114,18 +121,15 @@ func (c *KubeNodeController) List() {
 func (c *KubeNodeController) Get() {
 	cluster := c.Ctx.Input.Param(":cluster")
 	name := c.Ctx.Input.Param(":name")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		result, err := node.GetNodeByName(cli, name)
-		if err != nil {
-			logs.Error("get node by cluster (%s) name(%s) error.%v", cluster, name, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success(result)
-	} else {
-		c.AbortBadRequestFormat("Cluster")
+	cli := c.Client(cluster)
+
+	result, err := node.GetNodeByName(cli, name)
+	if err != nil {
+		logs.Error("get node by cluster (%s) name(%s) error.%v", cluster, name, err)
+		c.HandleError(err)
+		return
 	}
+	c.Success(result)
 }
 
 // @Title Update
@@ -143,18 +147,14 @@ func (c *KubeNodeController) Update() {
 		c.AbortBadRequestFormat("Name")
 	}
 
-	cli, err := client.Client(cluster)
-	if err == nil {
-		result, err := node.UpdateNode(cli, &tpl)
-		if err != nil {
-			logs.Error("update node (%v) by cluster (%s) error.%v", tpl, cluster, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success(result)
-	} else {
-		c.AbortBadRequestFormat("Cluster")
+	cli := c.Client(cluster)
+	result, err := node.UpdateNode(cli, &tpl)
+	if err != nil {
+		logs.Error("update node (%v) by cluster (%s) error.%v", tpl, cluster, err)
+		c.HandleError(err)
+		return
 	}
+	c.Success(result)
 }
 
 // @Title Delete
@@ -164,16 +164,12 @@ func (c *KubeNodeController) Update() {
 func (c *KubeNodeController) Delete() {
 	cluster := c.Ctx.Input.Param(":cluster")
 	name := c.Ctx.Input.Param(":name")
-	cli, err := client.Client(cluster)
-	if err == nil {
-		err := node.DeleteNode(cli, name)
-		if err != nil {
-			logs.Error("delete node (%s) by cluster (%s) error.%v", name, cluster, err)
-			c.HandleError(err)
-			return
-		}
-		c.Success("ok!")
-	} else {
-		c.AbortBadRequestFormat("Cluster")
+	cli := c.Client(cluster)
+	err := node.DeleteNode(cli, name)
+	if err != nil {
+		logs.Error("delete node (%s) by cluster (%s) error.%v", name, cluster, err)
+		c.HandleError(err)
+		return
 	}
+	c.Success("ok!")
 }

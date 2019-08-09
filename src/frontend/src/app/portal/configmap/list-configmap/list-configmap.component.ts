@@ -1,30 +1,29 @@
-import {Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
-import {State} from '@clr/angular';
-import {ConfirmationMessage} from '../../../shared/confirmation-dialog/confirmation-message';
-import {
-  ConfirmationButtons, ConfirmationState, ConfirmationTargets,
-  ResourcesActionType
-} from '../../../shared/shared.const';
-import {ConfirmationDialogService} from '../../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {PublishConfigMapTplComponent} from '../publish-tpl/publish-tpl.component';
-import {ConfigMap} from '../../../shared/model/v1/configmap';
-import {ConfigMapTpl} from '../../../shared/model/v1/configmaptpl';
-import {ConfigMapTplService} from '../../../shared/client/v1/configmaptpl.service';
-import {TplDetailService} from '../../common/tpl-detail/tpl-detail.service';
-import {AuthService} from '../../../shared/auth/auth.service';
-import {App} from '../../../shared/model/v1/app';
-import {Page} from '../../../shared/page/page-state';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationMessage } from '../../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets, ResourcesActionType } from '../../../shared/shared.const';
+import { ConfirmationDialogService } from '../../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { PublishConfigMapTplComponent } from '../publish-tpl/publish-tpl.component';
+import { ConfigMap } from '../../../shared/model/v1/configmap';
+import { ConfigMapTpl } from '../../../shared/model/v1/configmaptpl';
+import { ConfigMapTplService } from '../../../shared/client/v1/configmaptpl.service';
+import { TplDetailService } from '../../../shared/tpl-detail/tpl-detail.service';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { App } from '../../../shared/model/v1/app';
+import { Page } from '../../../shared/page/page-state';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { DiffService } from '../../../shared/diff/diff.service';
 
 @Component({
   selector: 'list-configmap',
   templateUrl: 'list-configmap.component.html',
   styleUrls: ['list-configmap.scss']
 })
-export class ListConfigMapComponent implements OnInit ,OnDestroy{
+export class ListConfigMapComponent implements OnInit, OnDestroy {
+  selected: ConfigMapTpl[] = [];
   @Input() showState: object;
   @ViewChild(PublishConfigMapTplComponent)
   publishTpl: PublishConfigMapTplComponent;
@@ -33,19 +32,20 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
   @Input() configMaps: ConfigMap[];
   @Input() configMapTpls: ConfigMapTpl[];
   @Input() page: Page;
-  state: State;
-  currentPage: number = 1;
+  state: ClrDatagridStateInterface;
+  currentPage = 1;
 
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() configmapTab = new EventEmitter<number>();
   @Output() cloneTpl = new EventEmitter<ConfigMapTpl>();
   subscription: Subscription;
 
-  componentName: string = '配置集';
+  componentName = '配置集';
 
   constructor(private configMapTplService: ConfigMapTplService,
               private tplDetailService: TplDetailService,
               private aceEditorService: AceEditorService,
+              private diffService: DiffService,
               private messageHandlerService: MessageHandlerService,
               public authService: AuthService,
               private deletionDialogService: ConfirmationDialogService) {
@@ -53,7 +53,7 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.CONFIGMAP_TPL) {
-        let tpl = message.data;
+        const tpl = message.data;
         this.configMapTplService.deleteById(tpl.id, this.app.id)
           .subscribe(
             response => {
@@ -77,6 +77,10 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
   ngOnInit(): void {
   }
 
+  diffTpl() {
+    this.diffService.diff(this.selected);
+  }
+
   pageSizeChange(pageSize: number) {
     this.state.page.to = pageSize - 1;
     this.state.page.size = pageSize;
@@ -93,7 +97,7 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
   }
 
   detailConfigMapTpl(tpl: ConfigMapTpl) {
-    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template),false));
+    this.aceEditorService.announceMessage(AceEditorMsg.Instance(JSON.parse(tpl.template), false));
   }
 
   publishConfigMapTpl(tpl: ConfigMapTpl) {
@@ -105,7 +109,7 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
   }
 
   deleteConfigMapTpl(tpl: ConfigMapTpl): void {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除' + this.componentName + '模版确认',
       `你确认删除` + this.componentName + `${tpl.name}？`,
       tpl,
@@ -115,7 +119,7 @@ export class ListConfigMapComponent implements OnInit ,OnDestroy{
     this.deletionDialogService.openComfirmDialog(deletionMessage);
   }
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }

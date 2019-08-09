@@ -1,6 +1,6 @@
-import {PublishStatus} from './publish-status';
-import {TemplateState} from '../../shared.const';
-import {Event} from './event';
+import { PublishStatus } from './publish-status';
+import { TemplateState } from '../../shared.const';
+import { Event } from './event';
 
 export class TemplateStatus {
   id: number;
@@ -18,7 +18,7 @@ export class TemplateStatus {
   }
 
   static fromPublishStatus(state: PublishStatus) {
-    let dStatus = new TemplateStatus();
+    const dStatus = new TemplateStatus();
     dStatus.id = state.id;
     dStatus.deploymentId = state.resourceId;
     dStatus.templateId = state.templateId;

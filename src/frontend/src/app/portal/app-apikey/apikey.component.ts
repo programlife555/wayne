@@ -1,26 +1,27 @@
-import {Component, OnInit, ViewChild, OnDestroy} from '@angular/core';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {apiKeyTypeApp, ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {AuthService} from '../../shared/auth/auth.service';
-import {PageState} from '../../shared/page/page-state';
-import {ListApiKeyComponent} from './list-apikey/list-apikey.component';
-import {CreateEditApiKeyComponent} from './create-edit-apikey/create-edit-apikey.component';
-import {ApiKey} from '../../shared/model/v1/apikey';
-import {ApiKeyService} from '../../shared/client/v1/apikey.service';
-import {ActivatedRoute} from '@angular/router';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { apiKeyTypeApp, ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { AuthService } from '../../shared/auth/auth.service';
+import { PageState } from '../../shared/page/page-state';
+import { ListApiKeyComponent } from './list-apikey/list-apikey.component';
+import { CreateEditApiKeyComponent } from './create-edit-apikey/create-edit-apikey.component';
+import { ApiKey } from '../../shared/model/v1/apikey';
+import { ApiKeyService } from '../../shared/client/v1/apikey.service';
+import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 
 const showState = {
-  '名称': {hidden: false},
-  '角色': {hidden: false},
-  '创建时间': {hidden: false},
-  '过期时间': {hidden: false},
-  '创建者': {hidden: false},
-  '描述': {hidden: false},
-  '操作': {hidden: false}
+  'name': {hidden: false},
+  'role': {hidden: false},
+  'create_time': {hidden: false},
+  'expire_time': {hidden: false},
+  'create_user': {hidden: false},
+  'description': {hidden: false},
+  'action': {hidden: false}
 };
 
 @Component({
@@ -46,12 +47,13 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
               private route: ActivatedRoute,
               public authService: AuthService,
               private messageHandlerService: MessageHandlerService,
+              public translate: TranslateService,
               private deletionDialogService: ConfirmationDialogService) {
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.API_KEY) {
-        let id = message.data;
+        const id = message.data;
         this.apiKeyService
           .deleteById(id, true, null, this.appId)
           .subscribe(
@@ -75,8 +77,8 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
   initShow() {
     this.showList = [];
     Object.keys(this.showState).forEach(key => {
-      if (!this.showState[key].hidden) this.showList.push(key);
-    })
+      if (!this.showState[key].hidden) { this.showList.push(key); }
+    });
   }
 
   confirmEvent() {
@@ -86,7 +88,7 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
       } else {
         this.showState[key] = {hidden: true};
       }
-    })
+    });
   }
 
   cancelEvent() {
@@ -99,7 +101,7 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {
         totalPage: this.pageState.page.totalPage,
@@ -115,7 +117,7 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
       .listPage(this.pageState, null, this.appId)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.changedApiKeys = data.list;
@@ -126,7 +128,7 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
 
   createApiKey(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -135,7 +137,7 @@ export class AppApiKeyComponent implements OnInit, OnDestroy {
   }
 
   deleteApiKey(apiKey: ApiKey) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除APIKey确认',
       '你确认删除APIKey ' + apiKey.name + ' ？',
       apiKey.id,

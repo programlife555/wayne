@@ -1,24 +1,26 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {ActivatedRoute} from '@angular/router';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {CreateEditPersistentVolumeClaimTplComponent} from './create-edit-persistentvolumeclaimtpl/create-edit-persistentvolumeclaimtpl.component';
-import {PersistentVolumeClaimTplService} from '../../shared/client/v1/persistentvolumeclaimtpl.service';
-import {ListPersistentVolumeClaimTplComponent} from './list-persistentvolumeclaimtpl/list-persistentvolumeclaimtpl.component';
-import {PersistentVolumeClaimTpl} from '../../shared/model/v1/persistentvolumeclaimtpl';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import {
+  CreateEditPersistentVolumeClaimTplComponent
+} from './create-edit-persistentvolumeclaimtpl/create-edit-persistentvolumeclaimtpl.component';
+import { PersistentVolumeClaimTplService } from '../../shared/client/v1/persistentvolumeclaimtpl.service';
+import { ListPersistentVolumeClaimTplComponent } from './list-persistentvolumeclaimtpl/list-persistentvolumeclaimtpl.component';
+import { PersistentVolumeClaimTpl } from '../../shared/model/v1/persistentvolumeclaimtpl';
+import { PageState } from '../../shared/page/page-state';
+import { isNotEmpty } from '../../shared/utils';
 
 @Component({
   selector: 'wayne-persistentvolumeclaimtpl',
   templateUrl: './persistentvolumeclaimtpl.component.html',
   styleUrls: ['./persistentvolumeclaimtpl.component.scss']
 })
-export class PersistentVolumeClaimTplComponent implements OnInit {
+export class PersistentVolumeClaimTplComponent implements OnInit, OnDestroy {
   @ViewChild(ListPersistentVolumeClaimTplComponent)
   list: ListPersistentVolumeClaimTplComponent;
   @ViewChild(CreateEditPersistentVolumeClaimTplComponent)
@@ -32,18 +34,15 @@ export class PersistentVolumeClaimTplComponent implements OnInit {
   subscription: Subscription;
 
   constructor(
-    private breadcrumbService: BreadcrumbService,
     private route: ActivatedRoute,
     private pvcTplService: PersistentVolumeClaimTplService,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/service/tpl', this.componentName + '列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/service/tpl/trash', '已删除' + this.componentName + '列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.PERSISTENT_VOLUME_CLAIM_TPL) {
-        let id = message.data;
+        const id = message.data;
         this.pvcTplService.deleteById(id, 0)
           .subscribe(
             response => {
@@ -61,10 +60,10 @@ export class PersistentVolumeClaimTplComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.pvcId = params['sid'];
-      if (typeof(this.pvcId) == 'undefined') {
-          this.pvcId = ''
+      if (typeof (this.pvcId) === 'undefined') {
+        this.pvcId = '';
       }
-    })
+    });
   }
 
   ngOnDestroy(): void {
@@ -73,14 +72,22 @@ export class PersistentVolumeClaimTplComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
+    }
+    if (this.route.snapshot.queryParams) {
+      Object.getOwnPropertyNames(this.route.snapshot.queryParams).map(key => {
+        const value = this.route.snapshot.queryParams[key];
+        if (isNotEmpty(value)) {
+          this.pageState.filters[key] = value;
+        }
+      });
     }
     this.pvcTplService.list(this.pageState, 0, 'false', this.pvcId)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.pvcTpls = data.list;
@@ -91,7 +98,7 @@ export class PersistentVolumeClaimTplComponent implements OnInit {
 
   createPvcTpl(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -100,7 +107,7 @@ export class PersistentVolumeClaimTplComponent implements OnInit {
   }
 
   deletePvcTpl(tpl: PersistentVolumeClaimTpl) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除PVC模版确认',
       '你确认删除PVC模版 ' + tpl.name + ' ？',
       tpl.id,

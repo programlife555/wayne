@@ -13,17 +13,21 @@ export class Cluster {
   checked: boolean;
 
   constructor(name?: string, checked?: boolean) {
-    if (name) this.name = name;
-    if (checked) this.checked = checked;
+    if (name) {
+      this.name = name;
+    }
+    if (checked) {
+      this.checked = checked;
+    }
     this.kubeConfig = '{}';
     this.metaData = '{}';
   }
 }
 
 export class ClusterMeta {
-  constructor(checked?: boolean) {
+  constructor(checked: boolean, value = 0) {
     this.checked = checked;
-    this.value = 0;
+    this.value = value;
   }
 
   checked: boolean;

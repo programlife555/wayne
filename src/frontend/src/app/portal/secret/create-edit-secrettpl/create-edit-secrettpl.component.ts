@@ -1,26 +1,27 @@
-import {Component, OnInit, ViewChild, AfterViewInit, Inject, OnDestroy} from '@angular/core';
-import {Location} from '@angular/common';
+import { AfterViewInit, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { DOCUMENT, Location } from '@angular/common';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {FormArray, FormBuilder, FormGroup} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType, appLabelKey, namespaceLabelKey} from '../../../shared/shared.const';
-import {ActivatedRoute, Router} from '@angular/router';
-import {Observable} from 'rxjs/Observable';
-import {DOCUMENT, EventManager} from '@angular/platform-browser';
-import {SecretTpl} from '../../../shared/model/v1/secrettpl';
-import {App} from '../../../shared/model/v1/app';
-import {Secret} from '../../../shared/model/v1/secret';
-import {KubeSecret, ObjectMeta} from '../../../shared/model/v1/kubernetes/secret';
-import {SecretTplService} from '../../../shared/client/v1/secrettpl.service';
-import {SecretService} from '../../../shared/client/v1/secret.service';
-import {AppService} from '../../../shared/client/v1/app.service';
-import {Cluster} from '../../../shared/model/v1/cluster';
-import {ClusterService} from '../../../shared/client/v1/cluster.service';
-import {CacheService} from '../../../shared/auth/cache.service';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
-import {AuthService} from '../../../shared/auth/auth.service';
+import { FormArray, FormBuilder, FormGroup } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType, appLabelKey, namespaceLabelKey } from '../../../shared/shared.const';
+import { ActivatedRoute, Router } from '@angular/router';
+import { combineLatest } from 'rxjs';
+import { EventManager } from '@angular/platform-browser';
+import { SecretTpl } from '../../../shared/model/v1/secrettpl';
+import { App } from '../../../shared/model/v1/app';
+import { Secret } from '../../../shared/model/v1/secret';
+import { KubeSecret, ObjectMeta } from '../../../shared/model/v1/kubernetes/secret';
+import { SecretTplService } from '../../../shared/client/v1/secrettpl.service';
+import { SecretService } from '../../../shared/client/v1/secret.service';
+import { AppService } from '../../../shared/client/v1/app.service';
+import { Cluster } from '../../../shared/model/v1/cluster';
+import { ClusterService } from '../../../shared/client/v1/cluster.service';
+import { CacheService } from '../../../shared/auth/cache.service';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { Base64 } from 'js-base64';
 
 @Component({
   selector: 'create-edit-secrettpl',
@@ -31,17 +32,17 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
   currentForm: FormGroup;
 
   secretTpl: SecretTpl = new SecretTpl();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
   actionType: ActionType;
   app: App;
   secret: Secret;
   top: number;
   box: HTMLElement;
   kubeSecret: KubeSecret = new KubeSecret();
-  componentName = '配置集';
+  componentName = '加密字典';
   clusters: Cluster[];
-  eventList: any[] = new Array();
+  eventList: any[] = Array();
 
   constructor(private secretTplService: SecretTplService,
               private secretService: SecretService,
@@ -57,7 +58,7 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
               private messageHandlerService: MessageHandlerService,
               @Inject(DOCUMENT) private document: any,
               private eventManager: EventManager
-            ) {
+  ) {
   }
 
   ngAfterViewInit() {
@@ -86,13 +87,13 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
       // hack
       setTimeout(() => {
         this.top = this.box.scrollTop + this.box.offsetHeight - 48;
-      }, 0)
+      }, 0);
     }
   }
 
   get datas(): FormArray {
     return this.currentForm.get('datas') as FormArray;
-  };
+  }
 
   initData() {
     return this.fb.group({
@@ -108,17 +109,18 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
 
   onDeleteData(index: number) {
     if (this.datas.controls.length <= 1) {
-      return
+      return;
     }
     this.datas.removeAt(index);
   }
 
   createForm() {
     let disabled = false;
-    if (this.actionType == ActionType.EDIT) {
+    if (this.actionType === ActionType.EDIT) {
       disabled = true;
     }
     this.currentForm = this.fb.group({
+      type: 'Opaque',
       description: this.secretTpl.description,
       datas: this.fb.array([
         this.fb.group({
@@ -130,7 +132,7 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
   }
 
   initClusterGroups() {
-    let clusters = Array<FormGroup>();
+    const clusters = Array<FormGroup>();
     this.clusters.forEach(cluster => {
       clusters.push(this.fb.group({
         checked: cluster.checked,
@@ -144,11 +146,11 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
   }
 
   ngOnInit(): void {
-    let appId = parseInt(this.route.parent.snapshot.params['id']);
-    let namespaceId = this.cacheService.namespaceId;
-    let secretId = parseInt(this.route.snapshot.params['secretId']);
-    let tplId = parseInt(this.route.snapshot.params['tplId']);
-    let observables = Array(
+    const appId = parseInt(this.route.parent.snapshot.params['id'], 10);
+    const namespaceId = this.cacheService.namespaceId;
+    const secretId = parseInt(this.route.snapshot.params['secretId'], 10);
+    const tplId = parseInt(this.route.snapshot.params['tplId'], 10);
+    const observables = Array(
       this.clusterService.getNames(),
       this.appService.getById(appId, namespaceId),
       this.secretService.getById(secretId, appId)
@@ -160,9 +162,9 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
       this.actionType = ActionType.ADD_NEW;
     }
     this.createForm();
-    Observable.combineLatest(observables).subscribe(
+    combineLatest(observables).subscribe(
       response => {
-        let clusters = response[0].data;
+        const clusters = response[0].data;
         for (let i = 0; i < clusters.length; i++) {
           clusters[i].checked = false;
         }
@@ -170,15 +172,15 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
 
         this.app = response[1].data;
         this.secret = response[2].data;
-        let tpl = response[3];
+        const tpl = response[3];
         if (tpl) {
           this.secretTpl = tpl.data;
           this.saveSecretTpl(JSON.parse(this.secretTpl.template));
           if (this.secretTpl.metaData) {
-            let clusters = JSON.parse(this.secretTpl.metaData).clusters;
-            for (let cluster of clusters) {
+            const configedClusters = JSON.parse(this.secretTpl.metaData).clusters;
+            for (const cluster of configedClusters) {
               for (let i = 0; i < this.clusters.length; i++) {
-                if (cluster == this.clusters[i].name) {
+                if (cluster === this.clusters[i].name) {
                   this.clusters[i].checked = true;
                 }
               }
@@ -193,10 +195,10 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
     );
   }
 
-  filterCluster(clusters:Cluster[]): Cluster[] {
+  filterCluster(clusters: Cluster[]): Cluster[] {
     return clusters.filter((clusterObj: Cluster) => {
       return this.cacheService.namespace.metaDataObj.clusterMeta &&
-        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name]
+        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name];
     });
   }
 
@@ -210,20 +212,21 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
       return;
     }
     this.isSubmitOnGoing = true;
-    let metaDataStr = this.secretTpl.metaData ? this.secretTpl.metaData : '{}';
-    let clusters = Array<string>();
+    const metaDataStr = this.secretTpl.metaData ? this.secretTpl.metaData : '{}';
+    const clusters = Array<string>();
     this.currentForm.controls.clusters.value.map((cluster: Cluster) => {
       if (cluster.checked) {
         clusters.push(cluster.name);
       }
     });
-    let metaData = JSON.parse(metaDataStr);
+    const metaData = JSON.parse(metaDataStr);
     metaData['clusters'] = clusters;
     this.secretTpl.metaData = JSON.stringify(metaData);
 
-    let kubeSecret = this.getKubeSecretByForm();
+    const kubeSecret = this.getKubeSecretByForm();
     this.secretTpl.template = JSON.stringify(kubeSecret);
     this.secretTpl.id = undefined;
+    this.secretTpl.createTime = this.secretTpl.updateTime = new Date();
     this.secretTplService.create(this.secretTpl, this.app.id).subscribe(
       status => {
         this.isSubmitOnGoing = false;
@@ -260,40 +263,53 @@ export class CreateEditSecretTplComponent implements OnInit, AfterViewInit, OnDe
     this.secretTpl.name = this.secret.name;
     this.secretTpl.secretId = this.secret.id;
 
-    let kubeSecret = this.kubeSecret;
+    const kubeSecret = this.kubeSecret;
     if (!kubeSecret.metadata) {
       kubeSecret.metadata = new ObjectMeta();
     }
     kubeSecret.kind = 'Secret';
     kubeSecret.apiVersion = 'v1';
-    kubeSecret.type = 'Opaque';
+    kubeSecret.type = formValue.type;
     kubeSecret.metadata.name = this.secret.name;
     kubeSecret.metadata.labels = this.buildLabels(kubeSecret.metadata.labels);
     if (formValue.datas && formValue.datas.length > 0) {
       kubeSecret.data = {};
-      for (let data of formValue.datas) {
-        kubeSecret.data[data.dataName] = btoa(data.dataValue);
+      for (const data of formValue.datas) {
+        kubeSecret.data[data.dataName] = Base64.encode(data.dataValue);
       }
     }
     return kubeSecret;
   }
 
   openModal(): void {
-    this.aceEditorService.announceMessage(AceEditorMsg.Instance(this.getKubeSecretByForm(),true));
+    this.aceEditorService.announceMessage(AceEditorMsg.Instance(this.getKubeSecretByForm(), true));
   }
 
   saveSecretTpl(kubeSecret: KubeSecret) {
+    this.removeUnused(kubeSecret);
     if (kubeSecret && kubeSecret.data) {
       this.kubeSecret = kubeSecret;
-      let datas = Array<FormGroup>();
+      const datas = Array<FormGroup>();
       Object.getOwnPropertyNames(kubeSecret.data).map(key => {
         datas.push(this.fb.group({
           dataName: key,
-          dataValue: atob(kubeSecret.data[key]),
-        }),)
+          dataValue: Base64.decode(kubeSecret.data[key]),
+        }));
       });
+      this.currentForm.setControl('type', this.fb.control(this.kubeSecret.type));
       this.currentForm.setControl('datas', this.fb.array(datas));
     }
+  }
+
+  // remove unused fields, deal with user advanced mode paste yaml/json manually
+  removeUnused(obj: any) {
+    const metaData = new ObjectMeta();
+    metaData.name = obj.metadata.name;
+    metaData.namespace = obj.metadata.namespace;
+    metaData.labels = obj.metadata.labels;
+    metaData.annotations = obj.metadata.annotations;
+    obj.metadata = metaData;
+    obj.status = undefined;
   }
 }
 

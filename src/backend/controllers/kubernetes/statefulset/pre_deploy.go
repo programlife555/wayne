@@ -3,10 +3,11 @@ package statefulset
 import (
 	"strings"
 
-	"github.com/Qihoo360/wayne/src/backend/models"
-	"github.com/Qihoo360/wayne/src/backend/util"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
+
+	"github.com/Qihoo360/wayne/src/backend/models"
+	"github.com/Qihoo360/wayne/src/backend/util"
 )
 
 func statefulsetPreDeploy(kubeStatefulSet *v1beta1.StatefulSet, statefulSet *models.Statefulset,
@@ -73,7 +74,7 @@ func statefulsetPreDeploy(kubeStatefulSet *v1beta1.StatefulSet, statefulSet *mod
 		kubeStatefulSet.Spec.Template.Spec.Containers[i].SecurityContext.Privileged = privileged
 	}
 	// step 5 set namespace
-	kubeStatefulSet.Namespace = namespace.MetaDataObj.Namespace
+	kubeStatefulSet.Namespace = namespace.KubeNamespace
 
 	// step 6
 	if kubeStatefulSet.Spec.Template.Annotations == nil {

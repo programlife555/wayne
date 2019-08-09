@@ -1,7 +1,7 @@
-import {Component, OnInit} from '@angular/core';
-import {Router} from '@angular/router';
-import {defaultRoutingUrl} from '../shared/shared.const';
-import {CacheService} from '../shared/auth/cache.service';
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { defaultRoutingUrl } from '../shared/shared.const';
+import { CacheService } from '../shared/auth/cache.service';
 
 @Component({
   selector: 'wayne-portal',
@@ -15,7 +15,7 @@ export class PortalComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.router.url == '/portal') {
+    if (this.router.url === '/portal') {
       this.router.navigate([defaultRoutingUrl]);
     }
   }

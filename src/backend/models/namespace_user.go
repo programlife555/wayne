@@ -34,7 +34,7 @@ func (*NamespaceUser) TableName() string {
 
 func (*namespaceUserModel) TableUnique() [][]string {
 	return [][]string{
-		[]string{"User", "Namespace", "Group"},
+		{"User", "Namespace", "Group"},
 	}
 }
 
@@ -116,10 +116,9 @@ func (*namespaceUserModel) Add(m *NamespaceUser, allGroupFlag bool) (id int64, e
 
 func (n *namespaceUserModel) GetById(id int64, allGroupFlag bool) (v *NamespaceUser, err error) {
 	v = &NamespaceUser{Id: id}
-	if err = Ormer().Read(v); err != nil {
+	if err = Ormer().QueryTable(TableNameNamespaceUser).Filter("Id", id).RelatedSel("User").One(v); err != nil {
 		return nil, err
 	}
-
 	if allGroupFlag {
 		namespaceUsers := []NamespaceUser{}
 		_, err := Ormer().QueryTable(TableNameNamespaceUser).Filter("Namespace", v.Namespace.Id).Filter("User", v.User.Id).RelatedSel("Group").All(&namespaceUsers)
@@ -130,6 +129,15 @@ func (n *namespaceUserModel) GetById(id int64, allGroupFlag bool) (v *NamespaceU
 			v.Groups = append(v.Groups, namespaceUser.Group)
 		}
 		v.Group = nil
+	}
+	return
+}
+
+func (m *namespaceUserModel) GetUserListByNamespaceId(nid int64) (nsUsers []NamespaceUser, err error) {
+	qs := Ormer().QueryTable(TableNameNamespaceUser).RelatedSel(TableNameUser).RelatedSel(TableNameGroup).
+		Filter("namespace__id__exact", nid)
+	if _, err = qs.All(&nsUsers); err != nil {
+		return
 	}
 	return
 }

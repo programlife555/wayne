@@ -1,5 +1,5 @@
-import {Secret} from './secret';
-import {PublishStatus} from './publish-status';
+import { Secret } from './secret';
+import { PublishStatus } from './publish-status';
 
 export class SecretTpl {
   id: number;
@@ -10,9 +10,10 @@ export class SecretTpl {
   deleted: boolean;
   user: string;
   createTime: Date;
+  updateTime: Date;
   secret: Secret;
   status: PublishStatus[];
-  metaData:string;
-  clusters:string[];
+  metaData: string;
+  clusters: string[];
 }
 

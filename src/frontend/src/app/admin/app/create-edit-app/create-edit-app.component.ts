@@ -1,23 +1,23 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {App} from '../../../shared/model/v1/app';
-import {AppService} from '../../../shared/client/v1/app.service';
-import {Namespace} from '../../../shared/model/v1/namespace';
-import {NamespaceService} from '../../../shared/client/v1/namespace.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorBoxComponent} from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { App } from '../../../shared/model/v1/app';
+import { AppService } from '../../../shared/client/v1/app.service';
+import { Namespace } from '../../../shared/model/v1/namespace';
+import { NamespaceService } from '../../../shared/client/v1/namespace.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorBoxComponent } from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
 
 @Component({
   selector: 'create-edit-app',
   templateUrl: 'create-edit-app.component.html',
   styleUrls: ['create-edit-app.scss']
 })
-export class CreateEditAppComponent {
+export class CreateEditAppComponent implements OnInit {
   @Output() create = new EventEmitter<boolean>();
   createAppOpened: boolean;
 
@@ -31,9 +31,9 @@ export class CreateEditAppComponent {
   componentName = '项目';
   app: App = new App();
   namespaces: Namespace[];
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
 
   appTitle: string;
   actionType: ActionType;
@@ -137,9 +137,9 @@ export class CreateEditAppComponent {
   }
 
   handleValidation(): void {
-    let cont = this.currentForm.controls['app_name'];
+    const cont = this.currentForm.controls['app_name'];
     if (cont) {
-      this.isNameValid = cont.valid
+      this.isNameValid = cont.valid;
     }
   }
 }

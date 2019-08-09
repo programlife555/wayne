@@ -1,9 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output, ViewChild} from '@angular/core';
-import {State} from '@clr/angular';
-import {Page} from '../../../shared/page/page-state';
-import {ApiKey} from '../../../shared/model/v1/apikey';
-import {TokenDetailComponent} from '../token-detail/token-detail';
-import {AuthService} from '../../../shared/auth/auth.service';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { Page } from '../../../shared/page/page-state';
+import { ApiKey } from '../../../shared/model/v1/apikey';
+import { TokenDetailComponent } from '../token-detail/token-detail';
+import { AuthService } from '../../../shared/auth/auth.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'list-apikey',
@@ -17,14 +18,17 @@ export class ListApiKeyComponent implements OnInit {
 
   @Input() apiKeys: ApiKey[];
   @Input() page: Page;
-  state: State;
-  currentPage: number = 1;
+  state: ClrDatagridStateInterface;
+  currentPage = 1;
 
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() delete = new EventEmitter<ApiKey>();
   @Output() edit = new EventEmitter<ApiKey>();
 
-  constructor(public authService: AuthService) {
+  constructor(
+    public authService: AuthService,
+    public translate: TranslateService
+  ) {
   }
 
   ngOnInit(): void {
@@ -38,7 +42,7 @@ export class ListApiKeyComponent implements OnInit {
     this.paginate.emit(this.state);
   }
 
-  refresh(state?: State) {
+  refresh(state?: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }
@@ -52,7 +56,7 @@ export class ListApiKeyComponent implements OnInit {
   }
 
   tokenDetail(apiKey: ApiKey) {
-    this.tokenDetailComponent.viewToken(apiKey.token)
+    this.tokenDetailComponent.viewToken(apiKey.token);
   }
 
 

@@ -1,8 +1,8 @@
-import {Injectable} from '@angular/core';
-import {ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot} from '@angular/router';
-import {MessageHandlerService} from '../message-handler/message-handler.service';
-import {AuthService} from './auth.service';
-import {defaultRoutingUrl} from '../shared.const';
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, CanActivate, CanActivateChild, Router, RouterStateSnapshot } from '@angular/router';
+import { MessageHandlerService } from '../message-handler/message-handler.service';
+import { AuthService } from './auth.service';
+import { defaultRoutingUrl } from '../shared.const';
 
 @Injectable()
 export class AdminAuthCheckGuard implements CanActivate, CanActivateChild {
@@ -16,17 +16,17 @@ export class AdminAuthCheckGuard implements CanActivate, CanActivateChild {
 
 
   canActivate(route: ActivatedRouteSnapshot, state: RouterStateSnapshot): Promise<boolean> | boolean {
-    //When routing change, clear
+    // When routing change, clear
     this.msgHandler.clear();
 
     return new Promise((resolve, reject) => {
       if (!this.authService.currentUser) {
         this.authService.retrieveUser().then(() => {
             if (this.authService.currentUser.admin) {
-              resolve(true)
+              resolve(true);
             } else {
               this.router.navigate([defaultRoutingUrl]);
-              resolve(false)
+              resolve(false);
             }
           }
         ).catch(
@@ -37,13 +37,13 @@ export class AdminAuthCheckGuard implements CanActivate, CanActivateChild {
         );
       } else {
         if (this.authService.currentUser.admin) {
-          resolve(true)
+          resolve(true);
         } else {
           this.router.navigate([defaultRoutingUrl]);
-          resolve(false)
+          resolve(false);
         }
       }
-      //Before activating, we firstly need to confirm whether the route is coming from peer part - admiral
+      // Before activating, we firstly need to confirm whether the route is coming from peer part - admiral
       return resolve(true);
     });
   }

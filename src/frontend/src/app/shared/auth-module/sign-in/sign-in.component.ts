@@ -1,9 +1,9 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {NgForm} from '@angular/forms';
-import {AuthoriseService} from '../../client/v1/auth.service';
-import {AuthService} from '../../auth/auth.service';
-import {ActivatedRoute} from '@angular/router';
-import {LoginTokenKey} from '../../shared.const';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { NgForm } from '@angular/forms';
+import { AuthoriseService } from '../../client/v1/auth.service';
+import { AuthService } from '../../auth/auth.service';
+import { ActivatedRoute } from '@angular/router';
+import { LoginTokenKey } from '../../shared.const';
 import * as particlesJS from 'particlesjs/dist/particles';
 
 @Component({
@@ -12,7 +12,7 @@ import * as particlesJS from 'particlesjs/dist/particles';
   styleUrls: ['./sign-in.component.scss']
 })
 export class SignInComponent implements OnInit {
-  version: String = require('../../../../../package.json').version;
+  version = require('../../../../../package.json').version;
   errMsg: string;
   username: string;
   password: string;
@@ -33,8 +33,8 @@ export class SignInComponent implements OnInit {
       connectParticles: true
     });
 
-    let sid = this.route.snapshot.queryParams['sid'];
-    let ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
+    const sid = this.route.snapshot.queryParams['sid'];
+    const ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
     if (sid) {
       localStorage.setItem(LoginTokenKey, sid);
       window.location.replace(ref);
@@ -57,12 +57,12 @@ export class SignInComponent implements OnInit {
     this.isSubmitOnGoing = true;
     let type = 'db';
     if (this.authService.config && this.authService.config.ldapLogin) {
-      type = 'ldap'
+      type = 'ldap';
     }
     this.authoriseService.Login(this.username, this.password, type).subscribe(
       resp => {
-        let ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
-        let data = resp.data;
+        const ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
+        const data = resp.data;
         localStorage.setItem(LoginTokenKey, data.token);
         window.location.replace(ref);
       },
@@ -74,14 +74,19 @@ export class SignInComponent implements OnInit {
 
   }
 
-  qihooLogin() {
-    let currentUrl = document.location.origin;
-    let ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
-    window.location.replace(`/login/oauth2/qihoo?next=${currentUrl}/sign-in?ref=${ref}`);
+  oauth2Login() {
+    const currentUrl = document.location.origin;
+    const ref = this.route.snapshot.queryParams['ref'] ? this.route.snapshot.queryParams['ref'] : '/';
+    window.location.replace(`/login/oauth2/oauth2?next=${currentUrl}/sign-in?ref=${ref}`);
+  }
+
+  getOAuth2Title() {
+    const oauth2Title = this.authService.config['system.oauth2-title'];
+    return oauth2Title ? oauth2Title : 'OAuth 2.0 Login';
   }
 
   getTitle() {
-    let imagePrefix = this.authService.config['system.title'];
+    const imagePrefix = this.authService.config['system.title'];
     return imagePrefix ? imagePrefix : 'Wayne';
   }
 

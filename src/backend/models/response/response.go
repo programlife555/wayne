@@ -6,6 +6,12 @@ import (
 	"github.com/Qihoo360/wayne/src/backend/models"
 )
 
+// for getnames api
+type NamesObject struct {
+	Id   int64  `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 type User struct {
 	Name    string   `json:"name,omitempty"`
 	Email   string   `json:"email,omitempty"`
@@ -98,6 +104,7 @@ type Resource struct {
 	Cluster      string               `json:"cluster,omitempty"`
 	Status       models.ReleaseStatus `json:"status,omitempty"`
 	Message      string               `json:"message,omitempty"`
+	Object       interface{}          `json:"object,omitempty"` // 用于存储 kubernetes 资源对象的配置细节
 }
 
 // OpenAPI 通用 失败 返回接口

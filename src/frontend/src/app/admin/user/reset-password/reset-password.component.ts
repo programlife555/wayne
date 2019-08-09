@@ -1,11 +1,11 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {User} from '../../../shared/model/v1/user';
-import {UserService} from '../../../shared/client/v1/user.service';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { User } from '../../../shared/model/v1/user';
+import { UserService } from '../../../shared/client/v1/user.service';
 
 @Component({
   selector: 'reset-password',
@@ -18,9 +18,9 @@ export class ResetPasswordComponent {
   currentForm: NgForm;
 
   user: User = new User();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
 
   userTitle: string;
 
@@ -29,9 +29,6 @@ export class ResetPasswordComponent {
   constructor(
     private userService: UserService,
     private messageHandlerService: MessageHandlerService) {
-  }
-
-  ngOnInit(): void {
   }
 
   resetPassword(user: User) {
@@ -49,24 +46,24 @@ export class ResetPasswordComponent {
       return;
     }
     this.isSubmitOnGoing = true;
-    if (this.user.password != this.user.rePassword) {
+    if (this.user.password !== this.user.rePassword) {
       this.alertMsg = '两次输入密码不一致，请检查！';
       this.isSubmitOnGoing = false;
-      return
+      return;
     }
-    if (this.user.password == '') {
+    if (this.user.password === '') {
       this.alertMsg = '密码不能为空！';
       this.isSubmitOnGoing = false;
-      return
+      return;
     }
     this.userService.resetPassword(this.user).subscribe(
       resp => {
         this.isSubmitOnGoing = false;
-        this.messageHandlerService.showSuccess('密码重置成功！')
+        this.messageHandlerService.showSuccess('密码重置成功！');
       },
       error => {
         this.isSubmitOnGoing = false;
-        this.messageHandlerService.handleError(error)
+        this.messageHandlerService.handleError(error);
       }
     );
     this.opened = false;

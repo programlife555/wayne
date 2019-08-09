@@ -6,33 +6,33 @@
   </clr-dg-column>
   <clr-dg-column [clrDgField]="'name'" class="col-app-name">
     <ng-container *clrDgHideableColumn="{hidden: false}">
-      名称
+      {{'TITLE.NAME' | translate}}
     </ng-container>
   </clr-dg-column>
   <clr-dg-column [clrDgField]="'description'" class="col-description">
     <ng-container *clrDgHideableColumn="{hidden: false}">
-      描述
+      {{'TITLE.DESCRIPTION' | translate}}
     </ng-container>
   </clr-dg-column>
   <clr-dg-column class="col-metadata">
     <ng-container *clrDgHideableColumn="{hidden: false}">
-      元数据
+      {{'TITLE.METADATA' | translate}}
     </ng-container>
   </clr-dg-column>
   <clr-dg-column [clrDgField]="'user'">
     <ng-container *clrDgHideableColumn="{hidden: false}">
-      创建者
+      {{'TITLE.CREATE_USER' | translate}}
     </ng-container>
   </clr-dg-column>
   <clr-dg-column [clrDgSortBy]="'createTime'">
     <ng-container *clrDgHideableColumn="{hidden: false}">
-      创建时间
+      {{'TITLE.CREATE_TIME' | translate}}
     </ng-container>
   </clr-dg-column>
   <clr-dg-row *ngFor="let cronjobTpl of cronjobTpls" [clrDgItem]="cronjobTpl">
     <clr-dg-action-overflow>
-      <button class="action-item" (click)="editCronjobTpl(cronjobTpl)" >编辑</button>
-      <button class="action-item" (click)="deleteCronjobTpl(cronjobTpl)">删除</button>
+      <button class="action-item" (click)="editCronjobTpl(cronjobTpl)">{{'BUTTON.EDIT' | translate}}</button>
+      <button class="action-item" (click)="deleteCronjobTpl(cronjobTpl)">{{'BUTTON.DELETE' | translate}}</button>
     </clr-dg-action-overflow>
     <clr-dg-cell class="col-query-id">{{cronjobTpl.id}}</clr-dg-cell>
     <clr-dg-cell class="col-app-name copy">{{cronjobTpl.name}}</clr-dg-cell>
@@ -46,11 +46,13 @@
     <clr-dg-cell>{{cronjobTpl.createTime | date:'yyyy-MM-dd HH:mm'}}</clr-dg-cell>
   </clr-dg-row>
 
-  <wayne-paginate
-    [(currentPage)]="currentPage"
-    [total]="page.totalCount"
-    [pageSizes]="[10, 20, 50]"
-    (sizeChange)="pageSizeChange($event)"
-  >
-  </wayne-paginate>
+  <clr-dg-footer>
+    <wayne-paginate
+      [(currentPage)]="currentPage"
+      [total]="page.totalCount"
+      [pageSizes]="[10, 20, 50]"
+      (sizeChange)="pageSizeChange($event)"
+    >
+    </wayne-paginate>
+  </clr-dg-footer>
 </clr-datagrid>

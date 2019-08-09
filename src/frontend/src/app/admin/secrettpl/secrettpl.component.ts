@@ -1,24 +1,24 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {Router, ActivatedRoute, Params} from '@angular/router';
-import {State} from '@clr/angular';
-import {ListSecretTplComponent} from './list-secrettpl/list-secrettpl.component';
-import {CreateEditSecretTplComponent} from './create-edit-secrettpl/create-edit-secrettpl.component';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {SecretTpl} from '../../shared/model/v1/secrettpl';
-import {SecretTplService} from '../../shared/client/v1/secrettpl.service';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ListSecretTplComponent } from './list-secrettpl/list-secrettpl.component';
+import { CreateEditSecretTplComponent } from './create-edit-secrettpl/create-edit-secrettpl.component';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { SecretTpl } from '../../shared/model/v1/secrettpl';
+import { SecretTplService } from '../../shared/client/v1/secrettpl.service';
+import { PageState } from '../../shared/page/page-state';
+import { isNotEmpty } from '../../shared/utils';
 
 @Component({
   selector: 'wayne-secrettpl',
   templateUrl: './secrettpl.component.html',
   styleUrls: ['./secrettpl.component.scss']
 })
-export class SecretTplComponent implements OnInit {
+export class SecretTplComponent implements OnInit, OnDestroy {
   @ViewChild(ListSecretTplComponent)
   listSecrettpl: ListSecretTplComponent;
   @ViewChild(CreateEditSecretTplComponent)
@@ -33,17 +33,14 @@ export class SecretTplComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private breadcrumbService: BreadcrumbService,
     private secrettplService: SecretTplService,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/secret/tpl', this.componentName + '列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/secret/tpl/trash', '已删除' + this.componentName + '列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.SECRET_TPL) {
-        let secrettplId = message.data;
+        const secrettplId = message.data;
         this.secrettplService.deleteById(secrettplId, 0)
           .subscribe(
             response => {
@@ -61,10 +58,10 @@ export class SecretTplComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.secretId = params['sid'];
-      if (typeof(this.secretId) == 'undefined') {
-          this.secretId = ''
+      if (typeof (this.secretId) === 'undefined') {
+        this.secretId = '';
       }
-    })
+    });
   }
 
   ngOnDestroy(): void {
@@ -73,15 +70,23 @@ export class SecretTplComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
     }
     this.pageState.params['deleted'] = false;
+    if (this.route.snapshot.queryParams) {
+      Object.getOwnPropertyNames(this.route.snapshot.queryParams).map(key => {
+        const value = this.route.snapshot.queryParams[key];
+        if (isNotEmpty(value)) {
+          this.pageState.filters[key] = value;
+        }
+      });
+    }
     this.secrettplService.listPage(this.pageState, 0, this.secretId)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.changedSecrettpls = data.list;
@@ -92,7 +97,7 @@ export class SecretTplComponent implements OnInit {
 
   createSecrettpl(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -108,7 +113,7 @@ export class SecretTplComponent implements OnInit {
   }
 
   openModal(): void {
-      this.createEditSecrettpl.newOrEditSecrettpl();
+    this.createEditSecrettpl.newOrEditSecrettpl();
   }
 
   editSecrettpl(secrettpl: SecretTpl): void {

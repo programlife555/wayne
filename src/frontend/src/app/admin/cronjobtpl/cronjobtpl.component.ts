@@ -1,24 +1,24 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {Router, ActivatedRoute, Params} from '@angular/router';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {CreateEditCronjobTplComponent} from './create-edit-cronjobtpl/create-edit-cronjobtpl.component';
-import {ListCronjobTplComponent} from './list-cronjobtpl/list-cronjobtpl.component';
-import {CronjobTpl} from '../../shared/model/v1/cronjobtpl';
-import {CronjobTplService} from '../../shared/client/v1/cronjobtpl.service';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { CreateEditCronjobTplComponent } from './create-edit-cronjobtpl/create-edit-cronjobtpl.component';
+import { ListCronjobTplComponent } from './list-cronjobtpl/list-cronjobtpl.component';
+import { CronjobTpl } from '../../shared/model/v1/cronjobtpl';
+import { CronjobTplService } from '../../shared/client/v1/cronjobtpl.service';
+import { PageState } from '../../shared/page/page-state';
+import { isNotEmpty } from '../../shared/utils';
 
 @Component({
   selector: 'wayne-cronjobtpl',
   templateUrl: './cronjobtpl.component.html',
   styleUrls: ['./cronjobtpl.component.scss']
 })
-export class CronjobTplComponent implements OnInit {
+export class CronjobTplComponent implements OnInit, OnDestroy {
   @ViewChild(ListCronjobTplComponent)
   list: ListCronjobTplComponent;
   @ViewChild(CreateEditCronjobTplComponent)
@@ -32,18 +32,15 @@ export class CronjobTplComponent implements OnInit {
   subscription: Subscription;
 
   constructor(
-    private breadcrumbService: BreadcrumbService,
     private cronjobTplService: CronjobTplService,
     private route: ActivatedRoute,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/cronjob/tpl', this.componentName + '列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/cronjob/tpl/trash', '已删除' + this.componentName + '列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.CRONJOB_TPL) {
-        let id = message.data;
+        const id = message.data;
         this.cronjobTplService.deleteById(id, 0)
           .subscribe(
             response => {
@@ -61,10 +58,10 @@ export class CronjobTplComponent implements OnInit {
   ngOnInit() {
     this.route.params.subscribe(params => {
       this.cronjobId = params['cid'];
-      if (typeof(this.cronjobId) == 'undefined') {
-          this.cronjobId = ''
+      if (typeof (this.cronjobId) === 'undefined') {
+        this.cronjobId = '';
       }
-    })
+    });
   }
 
   ngOnDestroy(): void {
@@ -73,15 +70,27 @@ export class CronjobTplComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
-      this.pageState = PageState.fromState(state, {pageSize: 10, totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
+      this.pageState = PageState.fromState(state, {
+        pageSize: 10,
+        totalPage: this.pageState.page.totalPage,
+        totalCount: this.pageState.page.totalCount
+      });
     }
     this.pageState.params['deleted'] = false;
+    if (this.route.snapshot.queryParams) {
+      Object.getOwnPropertyNames(this.route.snapshot.queryParams).map(key => {
+        const value = this.route.snapshot.queryParams[key];
+        if (isNotEmpty(value)) {
+          this.pageState.filters[key] = value;
+        }
+      });
+    }
     this.cronjobTplService.listPage(this.pageState, 0, this.cronjobId)
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.cronjobTpls = data.list;
@@ -92,7 +101,7 @@ export class CronjobTplComponent implements OnInit {
 
   createCronjobTpl(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -101,7 +110,7 @@ export class CronjobTplComponent implements OnInit {
   }
 
   deleteCronjobTpl(cronjobTpl: CronjobTpl) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除' + this.componentName + '确认',
       '你确认删除' + this.componentName + cronjobTpl.name + ' ？',
       cronjobTpl.id,

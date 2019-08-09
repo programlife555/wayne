@@ -8,11 +8,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/astaxie/beego/httplib"
+	"k8s.io/api/core/v1"
+
 	"github.com/Qihoo360/wayne/src/backend/controllers/base"
 	"github.com/Qihoo360/wayne/src/backend/models"
 	"github.com/Qihoo360/wayne/src/backend/util/hack"
-	"github.com/astaxie/beego/httplib"
-	"k8s.io/api/core/v1"
 )
 
 type RobinPersistentVolumeController struct {
@@ -27,10 +28,13 @@ func (c *RobinPersistentVolumeController) URLMapping() {
 func (c *RobinPersistentVolumeController) Prepare() {
 	// Check administration
 	c.APIController.Prepare()
-	if !c.User.Admin {
-		c.Ctx.Output.SetStatus(http.StatusUnauthorized)
-		c.Ctx.Output.Body([]byte("非管理员无法操作PV资源"))
+
+	methodActionMap := map[string]string{
+		"ListRbdImages":  models.PermissionRead,
+		"CreateRbdImage": models.PermissionCreate,
 	}
+	_, method := c.GetControllerAndAction()
+	c.PreparePermission(methodActionMap, method, models.PermissionTypeKubePersistentVolume)
 
 }
 

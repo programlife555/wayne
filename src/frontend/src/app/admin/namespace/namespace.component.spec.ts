@@ -3,14 +3,14 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { NamespaceComponent } from './namespace.component';
 
 describe('NamespaceComponent', () => {
-  let component: NamespaceComponent;
-  let fixture: ComponentFixture<NamespaceComponent>;
+  const component: NamespaceComponent;
+  const fixture: ComponentFixture<NamespaceComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ NamespaceComponent ]
+      declarations: [NamespaceComponent]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

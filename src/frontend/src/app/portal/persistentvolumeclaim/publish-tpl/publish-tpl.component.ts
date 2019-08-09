@@ -1,16 +1,17 @@
-import {Component, EventEmitter, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {Cluster} from '../../../shared/model/v1/cluster';
-import {CacheService} from '../../../shared/auth/cache.service';
-import {ResourcesActionType} from '../../../shared/shared.const';
-import {PersistentVolumeClaimTpl} from '../../../shared/model/v1/persistentvolumeclaimtpl';
-import {PublishStatus} from '../../../shared/model/v1/publish-status';
-import {PersistentVolumeClaimClient} from '../../../shared/client/v1/kubernetes/persistentvolumeclaims';
-import {PublishStatusService} from '../../../shared/client/v1/publishstatus.service';
-import {ActivatedRoute} from '@angular/router';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { Cluster } from '../../../shared/model/v1/cluster';
+import { CacheService } from '../../../shared/auth/cache.service';
+import { KubeResourcePersistentVolumeClaim, ResourcesActionType } from '../../../shared/shared.const';
+import { PersistentVolumeClaimTpl } from '../../../shared/model/v1/persistentvolumeclaimtpl';
+import { PublishStatus } from '../../../shared/model/v1/publish-status';
+import { PersistentVolumeClaimClient } from '../../../shared/client/v1/kubernetes/persistentvolumeclaims';
+import { PublishStatusService } from '../../../shared/client/v1/publishstatus.service';
+import { ActivatedRoute } from '@angular/router';
+import { KubernetesClient } from '../../../shared/client/v1/kubernetes/kubernetes';
 
 @Component({
   selector: 'publish-tpl',
@@ -19,14 +20,14 @@ import {ActivatedRoute} from '@angular/router';
 })
 export class PublishPersistentVolumeClaimTplComponent {
   @Output() published = new EventEmitter<boolean>();
-  modalOpened: boolean = false;
+  modalOpened = false;
   publishForm: NgForm;
   @ViewChild('publishForm')
   currentForm: NgForm;
 
   pvcTpl: PersistentVolumeClaimTpl;
   clusters = Array<Cluster>();
-  isSubmitOnGoing: boolean = false;
+  isSubmitOnGoing = false;
   title: string;
   forceOffline: boolean;
   actionType: ResourcesActionType;
@@ -34,12 +35,13 @@ export class PublishPersistentVolumeClaimTplComponent {
   constructor(public cacheService: CacheService,
               private route: ActivatedRoute,
               private publishStatusService: PublishStatusService,
+              private kubernetesClient: KubernetesClient,
               private persistentVolumeClaimClient: PersistentVolumeClaimClient,
               private messageHandlerService: MessageHandlerService) {
   }
 
   get appId(): number {
-    return parseInt(this.route.parent.parent.snapshot.params['id']);
+    return parseInt(this.route.parent.parent.snapshot.params['id'], 10);
   }
 
   newPublishTpl(pvcTpl: PersistentVolumeClaimTpl, actionType: ResourcesActionType) {
@@ -47,28 +49,28 @@ export class PublishPersistentVolumeClaimTplComponent {
     this.clusters = Array<Cluster>();
     this.pvcTpl = pvcTpl;
     this.forceOffline = false;
-    if (actionType == ResourcesActionType.PUBLISH) {
+    if (actionType === ResourcesActionType.PUBLISH) {
       this.title = '发布PVC[' + pvcTpl.name + ']';
       if (!pvcTpl.metaData) {
         this.messageHandlerService.warning('请先选择可发布集群');
-        return
+        return;
       }
       this.modalOpened = true;
-      let metaData = JSON.parse(pvcTpl.metaData);
-      for (let cluster of metaData.clusters) {
+      const metaData = JSON.parse(pvcTpl.metaData);
+      for (const cluster of metaData.clusters) {
         if (this.cacheService.namespace.metaDataObj && this.cacheService.namespace.metaDataObj.clusterMeta[cluster]) {
-          let c = new Cluster();
+          const c = new Cluster();
           c.name = cluster;
-          this.clusters.push(c)
+          this.clusters.push(c);
         }
       }
-    } else if (actionType == ResourcesActionType.OFFLINE) {
+    } else if (actionType === ResourcesActionType.OFFLINE) {
       this.modalOpened = true;
       this.title = '下线PVC[' + pvcTpl.name + ']';
-      for (let state of pvcTpl.status) {
-        let c = new Cluster();
+      for (const state of pvcTpl.status) {
+        const c = new Cluster();
         c.name = state.cluster;
-        this.clusters.push(c)
+        this.clusters.push(c);
       }
     }
 
@@ -76,13 +78,13 @@ export class PublishPersistentVolumeClaimTplComponent {
 
   getStatusByCluster(status: PublishStatus[], cluster: string): PublishStatus {
     if (status && status.length > 0) {
-      for (let state of status) {
-        if (state.cluster == cluster) {
-          return state
+      for (const state of status) {
+        if (state.cluster === cluster) {
+          return state;
         }
       }
     }
-    return null
+    return null;
   }
 
   onCancel() {
@@ -113,8 +115,9 @@ export class PublishPersistentVolumeClaimTplComponent {
   }
 
   offline(cluster: Cluster) {
-    let state = this.getStatusByCluster(this.pvcTpl.status, cluster.name);
-    this.persistentVolumeClaimClient.deleteByName(this.appId, cluster.name, this.cacheService.kubeNamespace, this.pvcTpl.name).subscribe(
+    const state = this.getStatusByCluster(this.pvcTpl.status, cluster.name);
+    this.kubernetesClient.delete(cluster.name, KubeResourcePersistentVolumeClaim, false,
+      this.pvcTpl.name, this.cacheService.kubeNamespace, this.appId.toString()).subscribe(
       response => {
         this.deletePublishStatus(state.id);
       },
@@ -141,7 +144,7 @@ export class PublishPersistentVolumeClaimTplComponent {
   }
 
   deploy(cluster: Cluster) {
-    let kubePvc = JSON.parse(this.pvcTpl.template);
+    const kubePvc = JSON.parse(this.pvcTpl.template);
     kubePvc.metadata.namespace = this.cacheService.kubeNamespace;
     this.persistentVolumeClaimClient.deploy(
       this.appId,

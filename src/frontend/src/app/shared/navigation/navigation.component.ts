@@ -1,6 +1,7 @@
-import {Inject, Component, OnInit, Input, AfterViewInit, OnDestroy} from '@angular/core';
-import {DOCUMENT, EventManager} from '@angular/platform-browser';
-import {NodeOffset} from './nodeOffset';
+import { AfterViewInit, Component, Inject, Input, OnDestroy, OnInit } from '@angular/core';
+import { EventManager } from '@angular/platform-browser';
+import { NodeOffset } from './nodeOffset';
+import { DOCUMENT } from '@angular/common';
 
 @Component({
   selector: 'wayne-navigation',
@@ -8,19 +9,20 @@ import {NodeOffset} from './nodeOffset';
   styleUrls: ['./navigation.component.scss']
 })
 
-export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
-  
+export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy {
+
   nodeTree: Array<any>;
   private box: any;
-  boxHeight: number = 0;
+  boxHeight = 0;
   boxOffset: number;
   allNodeOffset: Array<NodeOffset>;
   // 判断是否在点击跳转中，避开scrollEvent 事件
-  jumpTo: number = 0;
+  jumpTo = 0;
   scrollEventManage: any;
+
   /**
    * 这里监听不到数组的变化，只能采用传递字符创方式。。。
-  */
+   */
   @Input()
   set node(value: string) {
     if (value) {
@@ -30,11 +32,11 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
       this.addJumpEvent();
     }
   }
-  
+
   @Input()
   set container(value: string) {
     if (value) {
-      if (this.scrollEventManage) this.scrollEventManage();
+      if (this.scrollEventManage) { this.scrollEventManage(); }
       if (this.document.querySelector(value)) {
         this.box = this.document.querySelector(value);
         this.scrollEventManage = this.eventMessage.addEventListener(this.box, 'scroll', this.scrollEvent.bind(this));
@@ -43,7 +45,7 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
       }
     }
   }
-  
+
   constructor(
     @Inject(DOCUMENT) private document: any,
     private eventMessage: EventManager
@@ -56,22 +58,22 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
   }
 
   ngOnDestroy() {
-    if (this.scrollEventManage) this.scrollEventManage();
+    if (this.scrollEventManage) { this.scrollEventManage(); }
   }
 
   boxInit() {
     if (this.box) {
       this.boxHeight = this.getBoxHeight(this.box);
       this.boxOffset = this.getOffset(this.box);
-      if (this.nodeTree) this.allNodeOffset = this.getBoxOffset();
+      if (this.nodeTree) { this.allNodeOffset = this.getBoxOffset(); }
     }
   }
 
-  getElement (idName: string) : HTMLElement | null {
+  getElement(idName: string): HTMLElement | null {
     return this.document.getElementById(idName);
   }
 
-  getBoxHeight (box: HTMLElement) {
+  getBoxHeight(box: HTMLElement) {
     return box.scrollHeight;
   }
 
@@ -80,8 +82,8 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
       return {
         id: item,
         offset: this.getOffset(this.getElement(item))
-      }
-    })
+      };
+    });
   }
 
   addJumpEvent() {
@@ -90,14 +92,16 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
         try {
           const element = this.document.querySelector(`li.${item.id} a`);
           this.eventMessage.addEventListener(element, 'click', this.jumpEvent.bind(this, item.id));
-        } catch(error) {}
-      })
-    })
+        } catch (error) {
+        }
+      });
+    });
   }
 
   jumpEvent(nodeId: string, event: any) {
     event.preventDefault();
-    this.jumpTo = this.getOffset(this.getElement(nodeId)) - this.boxOffset > this.box.scrollHeight - this.box.offsetHeight ? this.box.scrollHeight - this.box.offsetHeight : this.getOffset(this.getElement(nodeId)) - this.boxOffset;
+    this.jumpTo = this.getOffset(this.getElement(nodeId)) - this.boxOffset > this.box.scrollHeight - this.box.offsetHeight ?
+      this.box.scrollHeight - this.box.offsetHeight : this.getOffset(this.getElement(nodeId)) - this.boxOffset;
     this.box.scrollTo({
       top: this.jumpTo,
       behavior: 'smooth'
@@ -107,11 +111,11 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
   }
 
   scrollEvent(event?: any) {
-    if (this.jumpTo) {
-      if (this.jumpTo ===  event.target.scrollTop) {
+    if (this.jumpTo && event) {
+      if (this.jumpTo === event.target.scrollTop) {
         this.jumpTo = 0;
       }
-      return ;
+      return;
     }
     // 确保在dom改变之后运行
     setTimeout(() => {
@@ -122,7 +126,7 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
         if (this.box) {
           top = this.box.scrollTop;
         } else {
-          return ;
+          return;
         }
       }
       if (this.box) {
@@ -134,19 +138,19 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
           this.setActive(top);
         }
       }
-    }, 0)
+    }, 0);
   }
 
   isActive(nodeId: string): boolean {
     try {
       return this.document.querySelector(`li.${nodeId}`).classList.contains('active');
-    } catch(error) {
+    } catch (error) {
       return false;
     }
   }
 
   removeActive() {
-    if (this.document.querySelector('li.active')) this.document.querySelector('li.active').classList.remove('active');
+    if (this.document.querySelector('li.active')) { this.document.querySelector('li.active').classList.remove('active'); }
   }
 
   addActive(nodeId: string) {
@@ -159,9 +163,9 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
 
   setActive(top: number): void {
     if (this.allNodeOffset) {
-      for(var key = 0; key < this.allNodeOffset.length; key++) {
-        if (this.allNodeOffset[key].offset >= top + this.boxOffset) {
-          let nodeId = this.allNodeOffset[key ? key - 1: 0].id;
+      for (let key = 0; key < this.allNodeOffset.length; key++) {
+        if (this.allNodeOffset[key].offset > top + this.boxOffset) {
+          const nodeId = this.allNodeOffset[key ? key - 1 : 0].id;
           if (!this.isActive(nodeId)) {
             this.removeActive();
             this.addActive(nodeId);
@@ -172,51 +176,54 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
     }
   }
 
-  getAllNode (array: Array<any>) {
-    let nodeArray: Array<string> = new Array();
-    let arr = JSON.parse(JSON.stringify(array));
-    function resolveChild (arr: Array<any>) {
-      arr.forEach(node => {
+  getAllNode(array: Array<any>) {
+    const nodeArray: Array<string> = new Array();
+    const arr = JSON.parse(JSON.stringify(array));
+
+    function resolveChild(children: Array<any>) {
+      children.forEach(node => {
         if (node.id) {
           nodeArray.push(node.id);
         }
-        if (node.child) resolveChild(node.child);
-      })
+        if (node.child) { resolveChild(node.child); }
+      });
     }
+
     resolveChild(arr);
     return nodeArray;
   }
-  
+
   /**
-   * @param {array} 输入一个node，tree，不包含text参数
-   * @returns {arrar} 返回一个node数组，补全text参数
-  */
+   * 输入一个node，tree，不包含text参数
+   * 返回一个node数组，补全text参数
+   */
 
   resolveTree(array: Array<any> | undefined): Array<any> {
     if (array) {
       array.forEach(item => {
         if (item.id === undefined) {
-          console.trace('数据缺少id');
+          console.log('数据缺少id');
         }
         if (item.text === undefined) {
           item.text = item.id;
         }
         item.child = this.resolveTree(item.child);
-      })
+      });
       return array;
     }
   }
 
-  
+
   ngOnInit() {
-    
+
   }
 
   get isIE8() {
     return navigator.userAgent.indexOf('MSIE 8.0') !== -1;
   }
+
   /**
-   * @param{elment} 获取element相对于body的偏移量 
+   * @return 获取element相对于body的偏移量
    */
 
   getOffset(element: any | null): number {
@@ -225,7 +232,7 @@ export class NavigationComponent implements OnInit, AfterViewInit, OnDestroy{
       top += element.offsetTop;
       element = element.offsetParent;
     }
-    while(element) {
+    while (element) {
       top += element.offsetTop;
       if (!this.isIE8) {
         top += element.clientTop;

@@ -1,12 +1,12 @@
-import {Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild} from '@angular/core';
-import {AceEditorService} from '../ace-editor.service';
-import {AceEditorMsg} from '../ace-editor';
-import {Subscription} from 'rxjs/Subscription';
+import { Component, ElementRef, EventEmitter, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { AceEditorService } from '../ace-editor.service';
+import { AceEditorMsg } from '../ace-editor';
+import { Subscription } from 'rxjs/Subscription';
 import * as ace from 'brace';
 import 'brace/mode/json';
 import 'brace/mode/yaml';
 import * as YAML from 'js-yaml';
-import {MessageHandlerService} from '../../message-handler/message-handler.service';
+import { MessageHandlerService } from '../../message-handler/message-handler.service';
 
 @Component({
   selector: 'wayne-ace-editor-box',
@@ -24,7 +24,7 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
   @Output() modalChange = new EventEmitter<any>();
 
   constructor(
-    public el: ElementRef, 
+    public el: ElementRef,
     private aceEditorService: AceEditorService,
     private messageHandle: MessageHandlerService) {
   }
@@ -32,7 +32,8 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.aceEditorMsgSub = this.aceEditorService.aceMessageAnnouncedSource$.subscribe(
       message => {
-        let modalOpened = true, title: string, hiddenFooter: boolean;
+        const modalOpened = true;
+        let title: string, hiddenFooter: boolean;
         this.aceMode = 'ace/mode/json';
         // 这里分为三种情况，不传edit时候是嵌套在其他模板中，true为编辑模板，false为查看模板。
         if (message.edit !== undefined) {
@@ -44,9 +45,11 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
             hiddenFooter = true;
           }
           title = message.title ? message.title : title;
-          let query = {modalOpened, title, hiddenFooter};
+          const query = {modalOpened, title, hiddenFooter};
           // 这里通过判断observers.length来判断是否存在父组件，非官方方法；
-          if (this.modalChange.observers.length) this.modalChange.emit(query);
+          if (this.modalChange.observers.length) {
+            this.modalChange.emit(query);
+          }
         }
         this.aceEditorMsg = message;
         this.editor = ace.edit(this.editorElement.nativeElement);
@@ -54,11 +57,12 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
         this.editor.$blockScrolling = Infinity;
         this.editor.setFontSize('16px');
         this.editor.setShowPrintMargin(false);
-        this.editor.setValue(typeof this.aceEditorMsg.message === 'string' ? JSON.stringify(JSON.parse(this.aceEditorMsg.message), null, 2) : JSON.stringify(this.aceEditorMsg.message, null, 2));
+        this.editor.setValue(typeof this.aceEditorMsg.message === 'string' ?
+          JSON.stringify(JSON.parse(this.aceEditorMsg.message), null, 2) : JSON.stringify(this.aceEditorMsg.message, null, 2));
 
         this.setStorageMode();
       }
-    )
+    );
   }
 
   setValue(value: string) {
@@ -74,8 +78,8 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
   }
 
   setStorageMode() {
-    let aceMode = localStorage.getItem('aceMode');
-    if (aceMode && aceMode == 'ace/mode/yaml') {
+    const aceMode = localStorage.getItem('aceMode');
+    if (aceMode && aceMode === 'ace/mode/yaml') {
       this.aceMode = aceMode;
       this.aceModeChange();
     }
@@ -90,11 +94,11 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
   aceModeChange() {
     this.editor.getSession().setMode(this.aceMode);
     if (this.editor.getValue().trim() !== '') {
-      if (this.aceMode == 'ace/mode/json') {
-        let obj = YAML.load(this.editor.getValue());
+      if (this.aceMode === 'ace/mode/json') {
+        const obj = YAML.load(this.editor.getValue());
         this.editor.setValue(JSON.stringify(obj, null, 2));
       } else {
-        let obj = JSON.parse(this.editor.getValue());
+        const obj = JSON.parse(this.editor.getValue());
         this.editor.setValue(YAML.dump(obj));
       }
     }
@@ -103,11 +107,11 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
 
   format() {
     try {
-      if (this.aceMode == 'ace/mode/json') {
-        let obj = JSON.parse(this.editor.getValue());
+      if (this.aceMode === 'ace/mode/json') {
+        const obj = JSON.parse(this.editor.getValue());
         this.editor.setValue(JSON.stringify(obj, null, 2));
       } else {
-        let obj = YAML.load(this.editor.getValue());
+        const obj = YAML.load(this.editor.getValue());
         this.editor.setValue(YAML.dump(obj));
       }
     } catch (e) {
@@ -115,7 +119,7 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
   }
 
   getValue() {
-    if (this.aceMode == 'ace/mode/json') {
+    if (this.aceMode === 'ace/mode/json') {
       return this.editor.getValue();
     } else {
       return JSON.stringify(YAML.load(this.editor.getValue())) || '';
@@ -128,11 +132,13 @@ export class AceEditorBoxComponent implements OnInit, OnDestroy {
 
   get isValid(): boolean {
     try {
-      if (this.editor.getValue().trim() === '') return true;
-      if (this.aceMode == 'ace/mode/json') {
-        JSON.parse(this.editor.getValue())
+      if (this.editor.getValue().trim() === '') {
+        return true;
+      }
+      if (this.aceMode === 'ace/mode/json') {
+        JSON.parse(this.editor.getValue());
       } else {
-        YAML.load(this.editor.getValue())
+        YAML.load(this.editor.getValue());
       }
     } catch (e) {
       return false;

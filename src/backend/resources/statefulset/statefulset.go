@@ -1,16 +1,17 @@
 package statefulset
 
 import (
+	"k8s.io/api/apps/v1beta1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+
 	"github.com/Qihoo360/wayne/src/backend/client"
+	"github.com/Qihoo360/wayne/src/backend/client/api"
 	"github.com/Qihoo360/wayne/src/backend/resources/common"
 	"github.com/Qihoo360/wayne/src/backend/resources/event"
 	"github.com/Qihoo360/wayne/src/backend/resources/pod"
 	"github.com/Qihoo360/wayne/src/backend/util/maps"
-	"k8s.io/api/apps/v1beta1"
-	"k8s.io/apimachinery/pkg/api/errors"
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/client-go/kubernetes"
 )
 
 type Statefulset struct {
@@ -18,14 +19,16 @@ type Statefulset struct {
 	Pods       common.PodInfo    `json:"pods"`
 }
 
-func GetStatefulsetResource(cli *kubernetes.Clientset, statefulSet *v1beta1.StatefulSet) (*common.ResourceList, error) {
-	old, err := cli.AppsV1beta1().StatefulSets(statefulSet.Namespace).Get(statefulSet.Name, metaV1.GetOptions{})
+// GetStatefulsetResource get StatefulSet resource statistics
+func GetStatefulsetResource(cli client.ResourceHandler, statefulSet *v1beta1.StatefulSet) (*common.ResourceList, error) {
+	obj, err := cli.Get(api.ResourceNameStatefulSet, statefulSet.Namespace, statefulSet.Name)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return common.StatefulsetResourceList(statefulSet), nil
 		}
 		return nil, err
 	}
+	old := obj.(*v1beta1.StatefulSet)
 	oldResourceList := common.StatefulsetResourceList(old)
 	newResourceList := common.StatefulsetResourceList(statefulSet)
 
@@ -51,7 +54,7 @@ func CreateOrUpdateStatefulset(cli *kubernetes.Clientset, statefulSet *v1beta1.S
 	return cli.AppsV1beta1().StatefulSets(statefulSet.Namespace).Update(old)
 }
 
-func GetStatefulsetDetail(cli *kubernetes.Clientset, indexer *client.CacheIndexer, name, namespace string) (*Statefulset, error) {
+func GetStatefulsetDetail(cli *kubernetes.Clientset, indexer *client.CacheFactory, name, namespace string) (*Statefulset, error) {
 	statefulSet, err := cli.AppsV1beta1().StatefulSets(namespace).Get(name, metaV1.GetOptions{})
 	if err != nil {
 		return nil, err
@@ -65,22 +68,17 @@ func GetStatefulsetDetail(cli *kubernetes.Clientset, indexer *client.CacheIndexe
 	podInfo.Current = statefulSet.Status.ReadyReplicas
 	podInfo.Desired = *statefulSet.Spec.Replicas
 
-	podSelector := labels.SelectorFromSet(statefulSet.Spec.Template.Labels).String()
-	pods, err := pod.GetPodsBySelector(cli, namespace, podSelector)
+	pods, err := pod.ListKubePod(indexer, namespace, statefulSet.Spec.Template.Labels)
 	if err != nil {
 		return nil, err
 	}
 
-	podInfo.Warnings = event.GetPodsWarningEvents(indexer, pods)
+	podInfo.Warnings, err = event.GetPodsWarningEvents(indexer, pods)
+	if err != nil {
+		return nil, err
+	}
 
 	result.Pods = podInfo
 
 	return result, nil
-}
-
-func DeleteStatefulset(cli *kubernetes.Clientset, name, namespace string) error {
-	deletionPropagation := metaV1.DeletePropagationBackground
-	return cli.AppsV1beta1().
-		StatefulSets(namespace).
-		Delete(name, &metaV1.DeleteOptions{PropagationPolicy: &deletionPropagation})
 }

@@ -5,14 +5,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/astaxie/beego"
+	"github.com/astaxie/beego/logs"
+	"github.com/astaxie/beego/orm"
+
 	"github.com/Qihoo360/wayne/src/backend/bus"
 	"github.com/Qihoo360/wayne/src/backend/bus/message"
 	"github.com/Qihoo360/wayne/src/backend/models"
 	"github.com/Qihoo360/wayne/src/backend/models/response"
 	"github.com/Qihoo360/wayne/src/backend/util/hack"
-	"github.com/astaxie/beego"
-	"github.com/astaxie/beego/logs"
-	"github.com/astaxie/beego/orm"
 )
 
 type APIKeyController struct {
@@ -20,7 +21,7 @@ type APIKeyController struct {
 
 	APIKey  *models.APIKey
 	Action  string
-	Sucess  response.Success
+	Success response.Success
 	Failure response.Failure
 }
 
@@ -102,8 +103,8 @@ func (c *APIKeyController) HandleResponse(data interface{}) {
 		return
 	}
 	if data == nil {
-		c.Sucess.Body.Code = http.StatusOK
-		data = c.Sucess.Body
+		c.Success.Body.Code = http.StatusOK
+		data = c.Success.Body
 	}
 	c.publishRequestMessage(http.StatusOK, data)
 	c.Ctx.Output.SetStatus(http.StatusOK)
@@ -115,9 +116,9 @@ func (c *APIKeyController) HandleByCode(code int) {
 	c.Ctx.Output.SetStatus(code)
 	// gateway 处验证不通过的状态码为 403
 	if code < 400 {
-		c.Sucess.Body.Code = code
-		c.publishRequestMessage(code, c.Sucess)
-		c.Data["json"] = c.Sucess.Body
+		c.Success.Body.Code = code
+		c.publishRequestMessage(code, c.Success)
+		c.Data["json"] = c.Success.Body
 
 	} else {
 		c.Failure.Body.Code = code

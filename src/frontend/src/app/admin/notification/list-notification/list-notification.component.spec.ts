@@ -3,14 +3,14 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { ListNotificationComponent } from './list-notification.component';
 
 describe('ListNotificationComponent', () => {
-  let component: ListNotificationComponent;
-  let fixture: ComponentFixture<ListNotificationComponent>;
+  const component: ListNotificationComponent;
+  const fixture: ComponentFixture<ListNotificationComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ ListNotificationComponent ]
+      declarations: [ListNotificationComponent]
     })
-    .compileComponents();
+      .compileComponents();
   }));
 
   beforeEach(() => {

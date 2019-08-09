@@ -1,22 +1,21 @@
-import {OnInit, ChangeDetectorRef, Component, OnDestroy, ViewChild, ElementRef} from '@angular/core';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {ActivatedRoute, Router} from '@angular/router';
-import {ListDeploymentComponent} from './list-deployment/list-deployment.component';
-import {CreateEditDeploymentComponent} from './create-edit-deployment/create-edit-deployment.component';
-import {Observable} from 'rxjs/Observable';
-import {State} from '@clr/angular';
-import {DeploymentClient} from '../../shared/client/v1/kubernetes/deployment';
-import {DeploymentStatus, DeploymentTpl} from '../../shared/model/v1/deploymenttpl';
-import {App} from '../../shared/model/v1/app';
-import {Cluster} from '../../shared/model/v1/cluster';
-import {Deployment} from '../../shared/model/v1/deployment';
-import {DeploymentService} from '../../shared/client/v1/deployment.service';
-import {DeploymentTplService} from '../../shared/client/v1/deploymenttpl.service';
-import {AppService} from '../../shared/client/v1/app.service';
-import {ClusterService} from '../../shared/client/v1/cluster.service';
-import {KubeDeployment} from '../../shared/model/v1/kubernetes/deployment';
-import {CacheService} from '../../shared/auth/cache.service';
-import {PublishHistoryService} from '../common/publish-history/publish-history.service';
+import { AfterContentInit, ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { ActivatedRoute, Router } from '@angular/router';
+import { ListDeploymentComponent } from './list-deployment/list-deployment.component';
+import { CreateEditDeploymentComponent } from './create-edit-deployment/create-edit-deployment.component';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { DeploymentClient } from '../../shared/client/v1/kubernetes/deployment';
+import { DeploymentStatus, DeploymentTpl } from '../../shared/model/v1/deploymenttpl';
+import { App } from '../../shared/model/v1/app';
+import { Cluster } from '../../shared/model/v1/cluster';
+import { Deployment } from '../../shared/model/v1/deployment';
+import { DeploymentService } from '../../shared/client/v1/deployment.service';
+import { DeploymentTplService } from '../../shared/client/v1/deploymenttpl.service';
+import { AppService } from '../../shared/client/v1/app.service';
+import { ClusterService } from '../../shared/client/v1/cluster.service';
+import { KubeDeployment } from '../../shared/model/v1/kubernetes/deployment';
+import { CacheService } from '../../shared/auth/cache.service';
+import { PublishHistoryService } from '../common/publish-history/publish-history.service';
 import {
   ConfirmationButtons,
   ConfirmationState,
@@ -25,23 +24,25 @@ import {
   PublishType,
   TemplateState
 } from '../../shared/shared.const';
-import {AuthService} from '../../shared/auth/auth.service';
-import {PublishService} from '../../shared/client/v1/publish.service';
-import {PublishStatus} from '../../shared/model/v1/publish-status';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {Subscription} from 'rxjs/Subscription';
-import {PageState} from '../../shared/page/page-state';
-import {TabDragService} from '../../shared/client/v1/tab-drag.service';
-import {OrderItem} from '../../shared/model/v1/order';
+import { AuthService } from '../../shared/auth/auth.service';
+import { PublishService } from '../../shared/client/v1/publish.service';
+import { PublishStatus } from '../../shared/model/v1/publish-status';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { Subscription } from 'rxjs/Subscription';
+import { combineLatest } from 'rxjs';
+import { PageState } from '../../shared/page/page-state';
+import { TabDragService } from '../../shared/client/v1/tab-drag.service';
+import { OrderItem } from '../../shared/model/v1/order';
+import { TranslateService } from '@ngx-translate/core';
 
 const showState = {
-  '创建时间': {hidden: false},
-  '版本': {hidden: false},
-  '上线机房': {hidden: false},
-  '发布说明': {hidden: false},
-  '创建者': {hidden: false},
-  '操作': {hidden: false}
+  'create_time': {hidden: false},
+  'version': {hidden: false},
+  'online_cluster': {hidden: false},
+  'release_explain': {hidden: false},
+  'create_user': {hidden: false},
+  'action': {hidden: false}
 };
 
 @Component({
@@ -49,7 +50,7 @@ const showState = {
   templateUrl: './deployment.component.html',
   styleUrls: ['./deployment.component.scss']
 })
-export class DeploymentComponent implements OnInit, OnDestroy {
+export class DeploymentComponent implements OnInit, OnDestroy, AfterContentInit {
   @ViewChild(ListDeploymentComponent)
   listDeployment: ListDeploymentComponent;
   @ViewChild(CreateEditDeploymentComponent)
@@ -57,7 +58,7 @@ export class DeploymentComponent implements OnInit, OnDestroy {
 
   pageState: PageState = new PageState();
   changedDeploymentTpls: DeploymentTpl[];
-  isOnline: boolean = false;
+  isOnline = false;
   deploymentId: number;
   app: App;
   appId: number;
@@ -76,6 +77,7 @@ export class DeploymentComponent implements OnInit, OnDestroy {
               private deploymentTplService: DeploymentTplService,
               private deploymentClient: DeploymentClient,
               private route: ActivatedRoute,
+              public translate: TranslateService,
               private router: Router,
               private publishService: PublishService,
               public cacheService: CacheService,
@@ -88,13 +90,15 @@ export class DeploymentComponent implements OnInit, OnDestroy {
               private el: ElementRef,
               private messageHandlerService: MessageHandlerService) {
     this.tabScription = this.tabDragService.tabDragOverObservable.subscribe(over => {
-      if (over) this.tabChange();
-    })
+      if (over) {
+        this.tabChange();
+      }
+    });
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.DEPLOYMENT) {
-        let deploymentId = message.data;
+        const deploymentId = message.data;
         this.deploymentService.deleteById(deploymentId, this.appId)
           .subscribe(
             response => {
@@ -114,12 +118,18 @@ export class DeploymentComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.initShow();
   }
-
+  /**
+   * diff
+   */
+  diffTpl() {
+    this.listDeployment.diffTpl();
+  }
+  /************************************** */
   initShow() {
     this.showList = [];
     Object.keys(this.showState).forEach(key => {
-      if (!this.showState[key].hidden) this.showList.push(key);
-    })
+      if (!this.showState[key].hidden) { this.showList.push(key); }
+    });
   }
 
   confirmEvent() {
@@ -129,7 +139,7 @@ export class DeploymentComponent implements OnInit, OnDestroy {
       } else {
         this.showState[key] = {hidden: true};
       }
-    })
+    });
   }
 
   cancelEvent() {
@@ -149,11 +159,11 @@ export class DeploymentComponent implements OnInit, OnDestroy {
   tabChange() {
     const orderList = [].slice.call(this.el.nativeElement.querySelectorAll('.tabs-item')).map((item, index) => {
       return {
-        id: parseInt(item.id),
+        id: parseInt(item.id, 10),
         order: index
-      }
+      };
     });
-    if (this.orderCache && JSON.stringify(this.orderCache) === JSON.stringify(orderList)) return;
+    if (this.orderCache && JSON.stringify(this.orderCache) === JSON.stringify(orderList)) { return; }
     this.deploymentService.updateOrder(this.appId, orderList).subscribe(
       response => {
         if (response.data === 'ok!') {
@@ -170,28 +180,28 @@ export class DeploymentComponent implements OnInit, OnDestroy {
   syncStatus() {
     if (this.changedDeploymentTpls && this.changedDeploymentTpls.length > 0) {
       for (let i = 0; i < this.changedDeploymentTpls.length; i++) {
-        let tpl = this.changedDeploymentTpls[i];
+        const tpl = this.changedDeploymentTpls[i];
         if (tpl.status && tpl.status.length > 0) {
           for (let j = 0; j < tpl.status.length; j++) {
-            let status = tpl.status[j];
+            const status = tpl.status[j];
             // 错误超过俩次时候停止请求
-            if (status.errNum > 2) continue;
-            this.deploymentClient.get(this.appId, status.cluster, this.cacheService.kubeNamespace, tpl.name).subscribe(
-              response => {
-                let code = response.statusCode | response.status;
+            if (status.errNum > 2)  { continue; }
+            this.deploymentClient.getDetail(this.appId, status.cluster, this.cacheService.kubeNamespace, tpl.name).subscribe(
+              next => {
+                const code = next.statusCode || next.status;
                 if (code === httpStatusCode.NoContent) {
                   this.changedDeploymentTpls[i].status[j].state = TemplateState.NOT_FOUND;
-                  return
+                  return;
                 }
 
-                let podInfo = response.data.pods;
+                const podInfo = next.data.pods;
                 // 防止切换tab tpls数据发生变化导致报错
                 if (this.changedDeploymentTpls &&
                   this.changedDeploymentTpls[i] &&
                   this.changedDeploymentTpls[i].status &&
                   this.changedDeploymentTpls[i].status[j]) {
                   let state = TemplateState.FAILD;
-                  if (podInfo.current == podInfo.desired) {
+                  if (podInfo.current === podInfo.desired) {
                     state = TemplateState.SUCCESS;
                   }
                   this.changedDeploymentTpls[i].status[j].errNum = 0;
@@ -206,13 +216,13 @@ export class DeploymentComponent implements OnInit, OnDestroy {
                   this.changedDeploymentTpls[i] &&
                   this.changedDeploymentTpls[i].status &&
                   this.changedDeploymentTpls[i].status[j]) {
-                    this.changedDeploymentTpls[i].status[j].errNum += 1;
-                    this.messageHandlerService.showError(`${status.cluster}请求错误次数 ${this.changedDeploymentTpls[i].status[j].errNum} 次`);
-                    if (this.changedDeploymentTpls[i].status[j].errNum === 3) {
-                      this.messageHandlerService.showError(`${status.cluster}的错误请求已经停止，请联系管理员解决`);
-                    }
+                  this.changedDeploymentTpls[i].status[j].errNum += 1;
+                  this.messageHandlerService.showError(`${status.cluster}请求错误次数 ${this.changedDeploymentTpls[i].status[j].errNum} 次`);
+                  if (this.changedDeploymentTpls[i].status[j].errNum === 3) {
+                    this.messageHandlerService.showError(`${status.cluster}的错误请求已经停止，请联系管理员解决`);
                   }
-                console.log(error)
+                }
+                console.log(error);
               }
             );
           }
@@ -240,10 +250,10 @@ export class DeploymentComponent implements OnInit, OnDestroy {
   }
 
   initDeployment(refreshTpl?: boolean) {
-    this.appId = parseInt(this.route.parent.snapshot.params['id']);
-    let namespaceId = this.cacheService.namespaceId;
-    this.deploymentId = parseInt(this.route.snapshot.params['deploymentId']);
-    Observable.combineLatest(
+    this.appId = parseInt(this.route.parent.snapshot.params['id'], 10);
+    const namespaceId = this.cacheService.namespaceId;
+    this.deploymentId = parseInt(this.route.snapshot.params['deploymentId'], 10);
+    combineLatest(
       this.clusterService.getNames(),
       this.deploymentService.list(PageState.fromState({sort: {by: 'id', reverse: false}}, {pageSize: 1000}), 'false', this.appId + ''),
       this.appService.getById(this.appId, namespaceId)
@@ -256,7 +266,7 @@ export class DeploymentComponent implements OnInit, OnDestroy {
         if (refreshTpl) {
           this.retrieve();
         }
-        let isRedirectUri = this.redirectUri();
+        const isRedirectUri = this.redirectUri();
         if (isRedirectUri) {
           this.navigateUri();
         }
@@ -278,15 +288,15 @@ export class DeploymentComponent implements OnInit, OnDestroy {
         this.deploymentId = this.deployments[0].id;
         return true;
       }
-      for (let deployment of this.deployments) {
-        if (this.deploymentId == deployment.id) {
+      for (const deployment of this.deployments) {
+        if (this.deploymentId === deployment.id) {
           return false;
         }
       }
       this.deploymentId = this.deployments[0].id;
       return true;
     } else {
-      return false
+      return false;
     }
   }
 
@@ -296,15 +306,15 @@ export class DeploymentComponent implements OnInit, OnDestroy {
         return {
           id: item.id,
           order: item.order
-        }
-      })
+        };
+      });
     } else {
       this.orderCache = [].slice.call(this.el.nativeElement.querySelectorAll('.tabs-item')).map((item, index) => {
         return {
-          id: parseInt(item.id),
+          id: parseInt(item.id, 10),
           order: index
-        }
-      })
+        };
+      });
     }
   }
 
@@ -313,31 +323,31 @@ export class DeploymentComponent implements OnInit, OnDestroy {
       if (!deploymentId) {
         return this.deployments[0].id;
       }
-      for (let deployment of this.deployments) {
-        if (deploymentId == deployment.id) {
-          return deploymentId
+      for (const deployment of this.deployments) {
+        if (deploymentId === deployment.id) {
+          return deploymentId;
         }
       }
       return this.deployments[0].id;
     } else {
-      return null
+      return null;
     }
   }
 
   // 点击创建部署
   createDeployment(): void {
-    this.createEditDeployment.newOrEditDeployment(this.app, this.filterCluster());
+    this.createEditDeployment.newOrEditResource(this.app, this.filterCluster());
   }
 
   // 点击编辑部署
   editDeployment() {
-    this.createEditDeployment.newOrEditDeployment(this.app, this.filterCluster(), this.deploymentId);
+    this.createEditDeployment.newOrEditResource(this.app, this.filterCluster(), this.deploymentId);
   }
 
   filterCluster(): Cluster[] {
     return this.clusters.filter((clusterObj: Cluster) => {
       return this.cacheService.namespace.metaDataObj.clusterMeta &&
-        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name]
+        this.cacheService.namespace.metaDataObj.clusterMeta[clusterObj.name];
     });
   }
 
@@ -363,15 +373,16 @@ export class DeploymentComponent implements OnInit, OnDestroy {
   // 点击克隆部署模版
   cloneDeploymentTpl(tpl: DeploymentTpl) {
     if (tpl) {
-      this.router.navigate([`portal/namespace/${this.cacheService.namespaceId}/app/${this.app.id}/deployment/${this.deploymentId}/tpl/${tpl.id}`]);
+      this.router.navigate(
+        [`portal/namespace/${this.cacheService.namespaceId}/app/${this.app.id}/deployment/${this.deploymentId}/tpl/${tpl.id}`]);
     }
   }
 
   deleteDeployment() {
     if (this.publishStatus && this.publishStatus.length > 0) {
-      this.messageHandlerService.warning('已上线部署无法删除，请先下线部署！')
+      this.messageHandlerService.warning('已上线部署无法删除，请先下线部署！');
     } else {
-      let deletionMessage = new ConfirmationMessage(
+      const deletionMessage = new ConfirmationMessage(
         '删除部署确认',
         '是否确认删除部署',
         this.deploymentId,
@@ -382,9 +393,9 @@ export class DeploymentComponent implements OnInit, OnDestroy {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (!this.deploymentId) {
-      return
+      return;
     }
     if (state) {
       this.pageState = PageState.fromState(state, {
@@ -394,14 +405,14 @@ export class DeploymentComponent implements OnInit, OnDestroy {
     }
     this.pageState.params['deleted'] = false;
     this.pageState.params['isOnline'] = this.isOnline;
-    Observable.combineLatest(
+    combineLatest(
       this.deploymentTplService.listPage(this.pageState, this.appId, this.deploymentId.toString()),
       this.publishService.listStatus(PublishType.DEPLOYMENT, this.deploymentId)
     ).subscribe(
       response => {
-        let status = response[1].data;
+        const status = response[1].data;
         this.publishStatus = status;
-        let tpls = response[0].data;
+        const tpls = response[0].data;
         this.pageState.page.totalPage = tpls.totalPage;
         this.pageState.page.totalCount = tpls.totalCount;
         this.changedDeploymentTpls = this.buildTplList(tpls.list, status);
@@ -415,9 +426,9 @@ export class DeploymentComponent implements OnInit, OnDestroy {
     if (!deploymentTpls) {
       return deploymentTpls;
     }
-    let tplStatusMap = {};
+    const tplStatusMap = {};
     if (status && status.length > 0) {
-      for (let state of status) {
+      for (const state of status) {
         if (!tplStatusMap[state.templateId]) {
           tplStatusMap[state.templateId] = Array<DeploymentStatus>();
         }
@@ -425,30 +436,35 @@ export class DeploymentComponent implements OnInit, OnDestroy {
       }
     }
 
-    let results = Array<DeploymentTpl>();
-    for (let deploymentTpl of deploymentTpls) {
+    const results = Array<DeploymentTpl>();
+    for (const deploymentTpl of deploymentTpls) {
       let kubeDeployment = new KubeDeployment();
       kubeDeployment = JSON.parse(deploymentTpl.template);
-      let containers = kubeDeployment.spec.template.spec.containers;
+      const containers = kubeDeployment.spec.template.spec.containers;
       if (containers.length > 0) {
-        let containerVersions = Array<string>();
-        for (let con of containers) {
+        const containerVersions = Array<string>();
+        for (const con of containers) {
           containerVersions.push(con.image);
         }
         deploymentTpl.containerVersions = containerVersions;
 
-        let publishStatus = tplStatusMap[deploymentTpl.id];
+        const publishStatus = tplStatusMap[deploymentTpl.id];
         if (publishStatus && publishStatus.length > 0) {
           deploymentTpl.status = publishStatus;
         }
       }
-      results.push(deploymentTpl)
+      results.push(deploymentTpl);
     }
     return results;
   }
 
   retrieveDeployments() {
-    this.deploymentService.list(PageState.fromState({sort: {by: 'id', reverse: false}}, {pageSize: 1000}), 'false', this.appId + '').subscribe(
+    this.deploymentService.list(PageState.fromState({
+      sort: {
+        by: 'id',
+        reverse: false
+      }
+    }, {pageSize: 1000}), 'false', this.appId + '').subscribe(
       response => {
         this.deployments = response.data.list.sort((a, b) => a.order - b.order);
         this.initOrder(this.deployments);

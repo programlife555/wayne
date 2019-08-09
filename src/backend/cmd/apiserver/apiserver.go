@@ -1,10 +1,11 @@
 package apiserver
 
 import (
-	"github.com/Qihoo360/wayne/src/backend/initial"
-	_ "github.com/Qihoo360/wayne/src/backend/routers"
 	"github.com/astaxie/beego"
 	"github.com/spf13/cobra"
+
+	"github.com/Qihoo360/wayne/src/backend/initial"
+	_ "github.com/Qihoo360/wayne/src/backend/routers"
 )
 
 var (
@@ -31,14 +32,8 @@ func run(cmd *cobra.Command, args []string) {
 	// K8S Client
 	initial.InitClient()
 
-	// 初始化数据库配置
-	// InitConf()
-
 	// 初始化RabbitMQ
-	busEnable, err := beego.AppConfig.Bool("BusEnable")
-	if err != nil {
-		panic(err)
-	}
+	busEnable := beego.AppConfig.DefaultBool("BusEnable", false)
 	if busEnable {
 		initial.InitBus()
 	}

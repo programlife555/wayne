@@ -1,23 +1,22 @@
-import {Component, OnInit, ViewChild} from '@angular/core';
-import {BreadcrumbService} from '../../shared/client/v1/breadcrumb.service';
-import {State} from '@clr/angular';
-import {ConfirmationDialogService} from '../../shared/confirmation-dialog/confirmation-dialog.service';
-import {ConfirmationMessage} from '../../shared/confirmation-dialog/confirmation-message';
-import {ConfirmationButtons, ConfirmationState, ConfirmationTargets} from '../../shared/shared.const';
-import {Subscription} from 'rxjs/Subscription';
-import {MessageHandlerService} from '../../shared/message-handler/message-handler.service';
-import {CreateEditClusterComponent} from './create-edit-cluster/create-edit-cluster.component';
-import {ListClusterComponent} from './list-cluster/list-cluster.component';
-import {Cluster} from '../../shared/model/v1/cluster';
-import {ClusterService} from '../../shared/client/v1/cluster.service';
-import {PageState} from '../../shared/page/page-state';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { ConfirmationDialogService } from '../../shared/confirmation-dialog/confirmation-dialog.service';
+import { ConfirmationMessage } from '../../shared/confirmation-dialog/confirmation-message';
+import { ConfirmationButtons, ConfirmationState, ConfirmationTargets } from '../../shared/shared.const';
+import { Subscription } from 'rxjs/Subscription';
+import { MessageHandlerService } from '../../shared/message-handler/message-handler.service';
+import { CreateEditClusterComponent } from './create-edit-cluster/create-edit-cluster.component';
+import { ListClusterComponent } from './list-cluster/list-cluster.component';
+import { Cluster } from '../../shared/model/v1/cluster';
+import { ClusterService } from '../../shared/client/v1/cluster.service';
+import { PageState } from '../../shared/page/page-state';
 
 @Component({
   selector: 'wayne-cluster',
   templateUrl: './cluster.component.html',
   styleUrls: ['./cluster.component.scss']
 })
-export class ClusterComponent implements OnInit {
+export class ClusterComponent implements OnInit, OnDestroy {
   @ViewChild(ListClusterComponent)
   list: ListClusterComponent;
   @ViewChild(CreateEditClusterComponent)
@@ -30,16 +29,13 @@ export class ClusterComponent implements OnInit {
 
   constructor(
     private clusterService: ClusterService,
-    private breadcrumbService: BreadcrumbService,
     private messageHandlerService: MessageHandlerService,
     private deletionDialogService: ConfirmationDialogService) {
-    breadcrumbService.addFriendlyNameForRoute('/admin/cluster', '集群列表');
-    breadcrumbService.addFriendlyNameForRoute('/admin/cluster/trash', '已删除集群列表');
     this.subscription = deletionDialogService.confirmationConfirm$.subscribe(message => {
       if (message &&
         message.state === ConfirmationState.CONFIRMED &&
         message.source === ConfirmationTargets.CLUSTER) {
-        let name = message.data;
+        const name = message.data;
         this.clusterService
           .deleteByName(name)
           .subscribe(
@@ -64,14 +60,14 @@ export class ClusterComponent implements OnInit {
     }
   }
 
-  retrieve(state?: State): void {
+  retrieve(state?: ClrDatagridStateInterface): void {
     if (state) {
       this.pageState = PageState.fromState(state, {totalPage: this.pageState.page.totalPage, totalCount: this.pageState.page.totalCount});
     }
     this.clusterService.list(this.pageState, 'false')
       .subscribe(
         response => {
-          let data = response.data;
+          const data = response.data;
           this.pageState.page.totalPage = data.totalPage;
           this.pageState.page.totalCount = data.totalCount;
           this.clusters = data.list;
@@ -82,7 +78,7 @@ export class ClusterComponent implements OnInit {
 
   createCluster(created: boolean) {
     if (created) {
-      this.retrieve()
+      this.retrieve();
     }
   }
 
@@ -91,7 +87,7 @@ export class ClusterComponent implements OnInit {
   }
 
   deleteCluster(cluster: Cluster) {
-    let deletionMessage = new ConfirmationMessage(
+    const deletionMessage = new ConfirmationMessage(
       '删除集群确认',
       '你确认删除集群 ' + cluster.name + ' ？',
       cluster.name,

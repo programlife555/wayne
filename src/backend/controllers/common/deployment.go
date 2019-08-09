@@ -3,10 +3,11 @@ package common
 import (
 	"strings"
 
-	"github.com/Qihoo360/wayne/src/backend/models"
-	"github.com/Qihoo360/wayne/src/backend/util"
 	"k8s.io/api/apps/v1beta1"
 	"k8s.io/api/core/v1"
+
+	"github.com/Qihoo360/wayne/src/backend/models"
+	"github.com/Qihoo360/wayne/src/backend/util"
 )
 
 func DeploymentPreDeploy(kubeDeployment *v1beta1.Deployment, deploy *models.Deployment,
@@ -73,7 +74,7 @@ func DeploymentPreDeploy(kubeDeployment *v1beta1.Deployment, deploy *models.Depl
 		kubeDeployment.Spec.Template.Spec.Containers[i].SecurityContext.Privileged = privileged
 	}
 	// step 5 set namespace
-	kubeDeployment.Namespace = namespace.MetaDataObj.Namespace
+	kubeDeployment.Namespace = namespace.KubeNamespace
 
 	// step 6
 	if kubeDeployment.Spec.Template.Annotations == nil {

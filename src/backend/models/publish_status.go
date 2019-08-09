@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/Qihoo360/wayne/src/backend/util/logs"
 	"github.com/astaxie/beego/orm"
+
+	"github.com/Qihoo360/wayne/src/backend/util/logs"
 )
 
 const (
@@ -14,6 +15,8 @@ const (
 	PublishTypeCronJob
 	PublishTypeStatefulSet
 	PublishTypeDaemonSet
+	PublishTypeIngress
+	PublishTypeHPA
 
 	TableNamePublishStatus = "publish_status"
 )

@@ -1,18 +1,18 @@
-import {Component, ElementRef, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, OnInit, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {isUndefined} from 'util';
-import {StatefulsetTemplate} from '../../../shared/model/v1/statefulsettpl';
-import {Statefulset} from '../../../shared/model/v1/statefulset';
-import {StatefulsetTplService} from '../../../shared/client/v1/statefulsettpl.service';
-import {StatefulsetService} from '../../../shared/client/v1/statefulset.service';
-import {AceEditorBoxComponent} from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { isUndefined } from 'util';
+import { StatefulsetTemplate } from '../../../shared/model/v1/statefulsettpl';
+import { Statefulset } from '../../../shared/model/v1/statefulset';
+import { StatefulsetTplService } from '../../../shared/client/v1/statefulsettpl.service';
+import { StatefulsetService } from '../../../shared/client/v1/statefulset.service';
+import { AceEditorBoxComponent } from '../../../shared/ace-editor/ace-editor-box/ace-editor-box.component';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
 @Component({
   selector: 'create-edit-statefulsettpl',
@@ -28,7 +28,7 @@ export class CreateEditStatefulsettplComponent implements OnInit {
   currentForm: NgForm;
 
   statefulsetTpl: StatefulsetTemplate = new StatefulsetTemplate();
-  isSubmitOnGoing: boolean = false;
+  isSubmitOnGoing = false;
 
   title: string;
   actionType: ActionType;
@@ -100,9 +100,9 @@ export class CreateEditStatefulsettplComponent implements OnInit {
       return;
     }
     this.statefulsetTpl.template = this.aceBox.getValue();
-    for (let statefulset of this.statefulsets) {
-      if (statefulset.id == this.statefulsetTpl.statefulsetId) {
-        this.statefulsetTpl.name = statefulset.name
+    for (const statefulset of this.statefulsets) {
+      if (statefulset.id === this.statefulsetTpl.statefulsetId) {
+        this.statefulsetTpl.name = statefulset.name;
       }
     }
     switch (this.actionType) {

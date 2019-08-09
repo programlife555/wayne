@@ -1,10 +1,10 @@
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
-import {Router} from '@angular/router';
-import {State} from '@clr/angular';
-import {CronjobTpl} from '../../../shared/model/v1/cronjobtpl';
-import {Page} from '../../../shared/page/page-state';
-import {AceEditorService} from '../../../shared/ace-editor/ace-editor.service';
-import {AceEditorMsg} from '../../../shared/ace-editor/ace-editor';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Router } from '@angular/router';
+import { ClrDatagridStateInterface } from '@clr/angular';
+import { CronjobTpl } from '../../../shared/model/v1/cronjobtpl';
+import { Page } from '../../../shared/page/page-state';
+import { AceEditorService } from '../../../shared/ace-editor/ace-editor.service';
+import { AceEditorMsg } from '../../../shared/ace-editor/ace-editor';
 
 @Component({
   selector: 'list-cronjobtpl',
@@ -15,10 +15,10 @@ export class ListCronjobTplComponent implements OnInit {
   @Input() cronjobTpls: CronjobTpl[];
 
   @Input() page: Page;
-  currentPage: number = 1;
-  state: State;
+  currentPage = 1;
+  state: ClrDatagridStateInterface;
 
-  @Output() paginate = new EventEmitter<State>();
+  @Output() paginate = new EventEmitter<ClrDatagridStateInterface>();
   @Output() delete = new EventEmitter<CronjobTpl>();
   @Output() edit = new EventEmitter<CronjobTpl>();
 
@@ -38,7 +38,7 @@ export class ListCronjobTplComponent implements OnInit {
   }
 
 
-  refresh(state: State) {
+  refresh(state: ClrDatagridStateInterface) {
     this.state = state;
     this.paginate.emit(state);
   }
@@ -47,7 +47,7 @@ export class ListCronjobTplComponent implements OnInit {
     this.delete.emit(cronjobTpl);
   }
 
-  editCronjobTpl(cronjobTpl: CronjobTpl){
+  editCronjobTpl(cronjobTpl: CronjobTpl) {
     this.edit.emit(cronjobTpl);
   }
 

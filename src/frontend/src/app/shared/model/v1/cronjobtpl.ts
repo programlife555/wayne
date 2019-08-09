@@ -1,6 +1,6 @@
-import {Cronjob} from './cronjob';
-import {TemplateState} from '../../shared.const';
-import {PublishStatus} from './publish-status';
+import { Cronjob } from './cronjob';
+import { TemplateState } from '../../shared.const';
+import { PublishStatus } from './publish-status';
 
 export class CronjobTpl {
   id: number;
@@ -13,6 +13,7 @@ export class CronjobTpl {
   user: string;
   metaData: string;
   createTime: Date;
+  updateTime?: Date;
   cronjob: Cronjob;
   clusters: string[];
   status: CronjobStatus[];
@@ -30,12 +31,14 @@ export class CronjobStatus {
   warnings: Event[];
   errNum: number;
 
+  kubeObj: any;
+
   constructor() {
     this.errNum = 0;
   }
 
   static fromPublishStatus(state: PublishStatus) {
-    let dStatus = new CronjobStatus();
+    const dStatus = new CronjobStatus();
     dStatus.id = state.id;
     dStatus.cronjobId = state.resourceId;
     dStatus.templateId = state.templateId;

@@ -1,12 +1,12 @@
-import {Component, EventEmitter, OnInit, Output, ViewChild} from '@angular/core';
+import { Component, EventEmitter, Output, ViewChild } from '@angular/core';
 
 import 'rxjs/add/operator/debounceTime';
 import 'rxjs/add/operator/distinctUntilChanged';
-import {NgForm} from '@angular/forms';
-import {MessageHandlerService} from '../../../shared/message-handler/message-handler.service';
-import {ActionType} from '../../../shared/shared.const';
-import {User} from '../../../shared/model/v1/user';
-import {UserService} from '../../../shared/client/v1/user.service';
+import { NgForm } from '@angular/forms';
+import { MessageHandlerService } from '../../../shared/message-handler/message-handler.service';
+import { ActionType } from '../../../shared/shared.const';
+import { User } from '../../../shared/model/v1/user';
+import { UserService } from '../../../shared/client/v1/user.service';
 
 @Component({
   selector: 'create-edit-user',
@@ -22,19 +22,19 @@ export class CreateEditUserComponent {
   currentForm: NgForm;
 
   user: User = new User();
-  checkOnGoing: boolean = false;
-  isSubmitOnGoing: boolean = false;
-  isNameValid: boolean = true;
+  checkOnGoing = false;
+  isSubmitOnGoing = false;
+  isNameValid = true;
+  isDisplayValid = true;
+  isEmailValid = true;
 
   userTitle: string;
   actionType: ActionType;
 
   constructor(
-      private userService: UserService,
-      private messageHandlerService: MessageHandlerService
-  ) {}
-
-  ngOnInit(): void {
+    private userService: UserService,
+    private messageHandlerService: MessageHandlerService
+  ) {
   }
 
   log() {
@@ -47,7 +47,7 @@ export class CreateEditUserComponent {
       this.userTitle = '编辑用户';
       this.userService.getUser(id).subscribe(
         status => {
-          this.user = status.data
+          this.user = status.data;
         },
         error => {
           this.messageHandlerService.handleError(error);
@@ -109,14 +109,21 @@ export class CreateEditUserComponent {
       this.currentForm.valid &&
       !this.isSubmitOnGoing &&
       this.isNameValid &&
-      !this.checkOnGoing;
+      !this.checkOnGoing && this.isEmailValid && this.isDisplayValid;
   }
 
   // Handle the form validation
-  handleValidation(): void {
-    let cont = this.currentForm.controls['user_name'];
+  handleNameValidation(): void {
+    const cont = this.currentForm.controls['user_name'];
     if (cont) {
-      this.isNameValid = cont.valid
+      this.isNameValid = cont.valid;
+    }
+  }
+
+  handleEmailValidation(): void {
+    const cont = this.currentForm.controls['user_email'];
+    if (cont) {
+      this.isEmailValid = cont.valid;
     }
   }
 }
